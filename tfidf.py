@@ -10,7 +10,7 @@ from typing import List
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--train_data_path", type=str, default="data/train.csv")
+    parser.add_argument("--train_path", type=str, default="data/train.csv")
     parser.add_argument("--valid_path", type=str, default="data/valid.csv")
     parser.add_argument("--test_path", type=str, default="data/comments_to_score.csv")
     parser.add_argument("--save_path", type=str, default="./submission.csv")
