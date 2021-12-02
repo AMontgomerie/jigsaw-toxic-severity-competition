@@ -65,7 +65,7 @@ if __name__ == "__main__":
         mse = mean_squared_error(oof_data.target, predictions)
         models.append(model)
         oof_scores.append(mse)
-    print(f"validation MSE by fold: {oof_scores}")
+    print(f"CV MSE: {np.mean(oof_scores)}")
     test_score = test(models, valid_data)
     print(f"ranking test score (mean of 5 folds): {test_score}")
     predict(models, test_data, args.save_path)
