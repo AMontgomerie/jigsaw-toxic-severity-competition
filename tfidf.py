@@ -52,9 +52,9 @@ def predict(
 
 if __name__ == "__main__":
     args = parse_args()
-    data = pd.read_csv(args.train_data_path)
-    valid_data = pd.read_csv(args.test_data_path)
-    test_data = pd.read_csv(args.test_data_path)
+    data = pd.read_csv(args.train_path)
+    valid_data = pd.read_csv(args.valid_path)
+    test_data = pd.read_csv(args.test_path)
     models = []
     oof_scores = []
     for fold in range(5):
