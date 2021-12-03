@@ -2,7 +2,7 @@ import argparse
 import pandas as pd
 import torch
 from torch.optim import AdamW
-from torch.utils.data import DataLoader
+from torch.utils.data import Dataset, DataLoader
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 from tqdm import tqdm
 import os
@@ -23,6 +23,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--dataloader_workers", type=int, default=2)
     parser.add_argument("--checkpoint", type=str, default="roberta-base")
     parser.add_argument("--seed", type=int, default=666)
+    parser.add_argument("--max_length", type=int, default=512)
     return parser.parse_args()
 
 
@@ -33,8 +34,8 @@ class Trainer:
         checkpoint: str,
         epochs: int,
         learning_rate: float,
-        train_set: pd.DataFrame,
-        valid_set: pd.DataFrame,
+        train_set: Dataset,
+        valid_set: Dataset,
         train_batch_size: int,
         valid_batch_size: int,
         dataloader_workers: int,
@@ -116,8 +117,12 @@ if __name__ == "__main__":
     train_data = data.loc[data.fold != args.fold].reset_index(drop=True)
     valid_data = data.loc[data.fold == args.fold].reset_index(drop=True)
     tokenizer = AutoTokenizer.from_pretrained(args.checkpoint)
-    train_set = ToxicDataset(train_data, tokenizer)
-    valid_set = ToxicDataset(valid_data, tokenizer)
+    train_set = ToxicDataset(
+        train_data.text, tokenizer, args.max_length, train_data.target
+    )
+    valid_set = ToxicDataset(
+        valid_data.text, tokenizer, args.max_length, valid_data.target
+    )
     trainer = Trainer(
         fold=args.fold,
         checkpoint=args.checkpoint,
