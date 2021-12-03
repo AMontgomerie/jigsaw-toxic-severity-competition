@@ -1,3 +1,4 @@
+import argparse
 import pandas as pd
 import torch
 from torch.optim import AdamW
@@ -7,6 +8,21 @@ from typing import Mapping
 from tqdm import tqdm
 
 from utils import AverageMeter
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--train_path", type=str, default="data/train.csv")
+    parser.add_argument("--valid_path", type=str, default="data/valid.csv")
+    parser.add_argument("--test_path", type=str, default="data/comments_to_score.csv")
+    parser.add_argument("--save_path", type=str, default="./model.pt")
+    parser.add_argument("--epochs", type=int, default=1)
+    parser.add_argument("--train_batch_size", type=int, default=32)
+    parser.add_argument("--valid_batch_size", type=int, default=128)
+    parser.add_argument("--learning_rate", type=float, default=1e-5)
+    parser.add_argument("--dataloader_workers", type=int, default=2)
+    parser.add_argument("--checkpoint", type=str, default="roberta-base")
+    return parser.parse_args()
 
 
 class ToxicDataset(Dataset):
@@ -103,26 +119,21 @@ class Trainer:
 
 
 if __name__ == "__main__":
-    data = pd.read_csv("../data/train.csv")
-    epochs = 1
-    checkpoint = "roberta-base"
-    train_batch_size = 32
-    valid_batch_size = 128
-    dataloader_workers = 2
-    learning_rate = 1e-5
+    args = parse_args()
+    data = pd.read_csv(args.train_path)
     train_data = data[data.fold != 0]
     valid_data = data[data.fold == 0]
-    tokenizer = AutoTokenizer.from_pretrained(checkpoint)
+    tokenizer = AutoTokenizer.from_pretrained(args.checkpoint)
     train_set = ToxicDataset(train_data, tokenizer)
     valid_set = ToxicDataset(valid_data, tokenizer)
     trainer = Trainer(
-        checkpoint=checkpoint,
-        epochs=epochs,
-        learning_rate=learning_rate,
-        train_set=train_set,
-        valid_set=valid_set,
-        train_batch_size=train_batch_size,
-        valid_batch_size=valid_batch_size,
-        dataloader_workers=dataloader_workers,
+        checkpoint=args.checkpoint,
+        epochs=args.epochs,
+        learning_rate=args.learning_rate,
+        train_set=args.train_set,
+        valid_set=args.valid_set,
+        train_batch_size=args.train_batch_size,
+        valid_batch_size=args.valid_batch_size,
+        dataloader_workers=args.dataloader_workers,
     )
     trainer.train()
