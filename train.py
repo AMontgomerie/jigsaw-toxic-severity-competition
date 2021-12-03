@@ -70,7 +70,7 @@ class Trainer:
         self.best_valid_loss = float("inf")
 
     def train(self) -> None:
-        for epoch in (1, self.epochs + 1):
+        for epoch in range(1, self.epochs + 1):
             self.model.train()
             self.train_loss.reset()
             with tqdm(total=len(self.train_loader), unit="batches") as tepoch:
