@@ -6,6 +6,7 @@ from torch.utils.data import Dataset, DataLoader
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 from typing import Mapping
 from tqdm import tqdm
+import os
 
 from utils import AverageMeter
 
@@ -16,7 +17,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--train_path", type=str, default="data/train.csv")
     parser.add_argument("--valid_path", type=str, default="data/valid.csv")
     parser.add_argument("--test_path", type=str, default="data/comments_to_score.csv")
-    parser.add_argument("--save_path", type=str, default="./model.pt")
+    parser.add_argument("--save_dir", type=str, default=".")
     parser.add_argument("--epochs", type=int, default=1)
     parser.add_argument("--train_batch_size", type=int, default=32)
     parser.add_argument("--valid_batch_size", type=int, default=128)
@@ -53,6 +54,7 @@ class ToxicDataset(Dataset):
 class Trainer:
     def __init__(
         self,
+        fold: int,
         checkpoint: str,
         epochs: int,
         learning_rate: float,
@@ -61,7 +63,7 @@ class Trainer:
         train_batch_size: int,
         valid_batch_size: int,
         dataloader_workers: int,
-        save_path: str,
+        save_dir: str,
     ) -> None:
         self.model = AutoModelForSequenceClassification.from_pretrained(
             checkpoint, num_labels=1
@@ -86,7 +88,9 @@ class Trainer:
         self.epochs = epochs
         self.train_batch_size = train_batch_size
         self.valid_batch_size = valid_batch_size
-        self.save_path = save_path
+        self.save_path = os.path.join(
+            save_dir, f"{checkpoint.replace('/', '_')}_{fold}.bin"
+        )
         self.best_valid_loss = float("inf")
 
     def train(self) -> None:
@@ -139,6 +143,7 @@ if __name__ == "__main__":
     train_set = ToxicDataset(train_data, tokenizer)
     valid_set = ToxicDataset(valid_data, tokenizer)
     trainer = Trainer(
+        fold=args.fold,
         checkpoint=args.checkpoint,
         epochs=args.epochs,
         learning_rate=args.learning_rate,
@@ -147,6 +152,6 @@ if __name__ == "__main__":
         train_batch_size=args.train_batch_size,
         valid_batch_size=args.valid_batch_size,
         dataloader_workers=args.dataloader_workers,
-        save_path=args.save_path,
+        save_dir=args.save_dir,
     )
     trainer.train()
