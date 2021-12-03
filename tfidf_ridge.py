@@ -36,7 +36,7 @@ def train(fold: int, train_data: pd.DataFrame, oof_data: pd.DataFrame) -> Pipeli
             min_mse = mse
             best_model = model
             best_alpha = alpha
-    print(f"best model | alpha: {best_alpha} | mse: {mse}\n")
+    print(f"best model | alpha: {best_alpha} | mse: {min_mse}\n")
     return best_model, min_mse
 
 
