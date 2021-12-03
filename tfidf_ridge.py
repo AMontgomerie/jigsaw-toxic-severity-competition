@@ -17,10 +17,27 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def train(train_data: pd.DataFrame) -> Pipeline:
-    model = Pipeline([("tfidf", TfidfVectorizer()), ("ridge", Ridge())])
-    model.fit(train_data.text, train_data.target)
-    return model
+def train(fold: int, train_data: pd.DataFrame, oof_data: pd.DataFrame) -> Pipeline:
+    encoder = TfidfVectorizer(
+        max_df=0.8,
+        ngram_range=(1, 2),
+    )
+    min_mse = float("inf")
+    best_model = None
+    best_alpha = -1
+    for alpha in np.linspace(0.1, 1, 20):
+        regressor = Ridge(alpha=alpha)
+        model = Pipeline([("tfidf", encoder), ("ridge", regressor)])
+        model.fit(train_data.text, train_data.target)
+        predictions = model.predict(oof_data.text)
+        mse = mean_squared_error(oof_data.target, predictions)
+        print(f"fold: {fold} | alpha: {alpha} | mse: {mse}")
+        if mse < min_mse:
+            min_mse = mse
+            best_model = model
+            best_alpha = alpha
+    print(f"best model | alpha: {best_alpha} | mse: {mse}\n")
+    return best_model, min_mse
 
 
 def test(models: List[Pipeline], test_data: pd.DataFrame) -> float:
@@ -56,16 +73,14 @@ if __name__ == "__main__":
     valid_data = pd.read_csv(args.valid_path)
     test_data = pd.read_csv(args.test_path)
     models = []
-    oof_scores = []
+    mse_scores = []
     for fold in range(5):
         train_data = data[data.fold != fold]
         oof_data = data[data.fold == fold]
-        model = train(train_data)
-        predictions = model.predict(oof_data.text)
-        mse = mean_squared_error(oof_data.target, predictions)
+        model, mse = train(fold, train_data, oof_data)
+        mse_scores.append(mse)
         models.append(model)
-        oof_scores.append(mse)
-    print(f"CV MSE: {np.mean(oof_scores)}")
+    print(f"cv mse: {np.mean(mse_scores)}")
     test_score = test(models, valid_data)
     print(f"ranking test score (mean of 5 folds): {test_score}")
     predict(models, test_data, args.save_path)
