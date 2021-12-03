@@ -12,6 +12,7 @@ from utils import AverageMeter
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
+    parser.add_argument("--fold", type=int, default=0)
     parser.add_argument("--train_path", type=str, default="data/train.csv")
     parser.add_argument("--valid_path", type=str, default="data/valid.csv")
     parser.add_argument("--test_path", type=str, default="data/comments_to_score.csv")
@@ -60,6 +61,7 @@ class Trainer:
         train_batch_size: int,
         valid_batch_size: int,
         dataloader_workers: int,
+        save_path: str
     ) -> None:
         self.model = AutoModelForSequenceClassification.from_pretrained(
             checkpoint, num_labels=1
@@ -84,6 +86,8 @@ class Trainer:
         self.epochs = epochs
         self.train_batch_size = train_batch_size
         self.valid_batch_size = valid_batch_size
+        self.save_path = save_path
+        self.best_valid_loss = float("inf")
 
     def train(self) -> None:
         for epoch in (1, self.epochs + 1):
@@ -102,6 +106,12 @@ class Trainer:
                     tepoch.set_postfix({"train_loss": self.train_loss.avg})
                     tepoch.update(1)
             valid_loss = self.evaluate()
+            if valid_loss < self.best_valid_loss:
+                print(f"Valid loss decreased from {self.best_valid_loss} to {valid_loss}. Saving.")
+                torch.save(self.model.state_dict(), self.save_path)
+                self.best_valid_loss = valid_loss
+            else:
+                print(f"{valid_loss} is not an improvement.")
 
     @torch.no_grad()
     def evaluate(self) -> float:
@@ -116,13 +126,16 @@ class Trainer:
                 tepoch.set_postfix({"valid_loss": valid_loss.avg})
                 tepoch.update(1)
         return valid_loss.avg
+    
+    def save(self):
+
 
 
 if __name__ == "__main__":
     args = parse_args()
     data = pd.read_csv(args.train_path)
-    train_data = data[data.fold != 0]
-    valid_data = data[data.fold == 0]
+    train_data = data[data.fold != args.fold]
+    valid_data = data[data.fold == args.fold]
     tokenizer = AutoTokenizer.from_pretrained(args.checkpoint)
     train_set = ToxicDataset(train_data, tokenizer)
     valid_set = ToxicDataset(valid_data, tokenizer)
@@ -135,5 +148,6 @@ if __name__ == "__main__":
         train_batch_size=args.train_batch_size,
         valid_batch_size=args.valid_batch_size,
         dataloader_workers=args.dataloader_workers,
+        save_path=args.save_path
     )
     trainer.train()
