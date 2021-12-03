@@ -22,9 +22,9 @@ class ToxicDataset(Dataset):
         return len(self.texts)
 
     def __getitem__(self, index: int) -> Mapping[torch.Tensor, torch.Tensor]:
-        item = self.texts.loc[index]
+        text = self.texts.loc[index]
         encoded_item = self.tokenizer(
-            item.text,
+            text,
             max_length=self.max_length,
             padding="max_length",
             truncation=True,
