@@ -14,28 +14,40 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--valid_path", type=str, default="data/valid.csv")
     parser.add_argument("--test_path", type=str, default="data/comments_to_score.csv")
     parser.add_argument("--save_path", type=str, default="./submission.csv")
+    parser.add_argument("--ridge_alpha", type=float, default=None)
     return parser.parse_args()
 
 
-def train(fold: int, train_data: pd.DataFrame, oof_data: pd.DataFrame) -> Pipeline:
+def train(
+    fold: int, train_data: pd.DataFrame, oof_data: pd.DataFrame, alpha: float = None
+) -> Pipeline:
     encoder = TfidfVectorizer(
         max_df=0.8,
         ngram_range=(1, 2),
     )
     min_mse = float("inf")
     best_model = None
-    best_alpha = -1
-    for alpha in np.linspace(0.1, 1, 20):
-        regressor = Ridge(alpha=alpha)
-        model = Pipeline([("tfidf", encoder), ("ridge", regressor)])
-        model.fit(train_data.text, train_data.target)
-        predictions = model.predict(oof_data.text)
-        mse = mean_squared_error(oof_data.target, predictions)
-        print(f"fold: {fold} | alpha: {alpha} | mse: {mse}")
-        if mse < min_mse:
-            min_mse = mse
-            best_model = model
-            best_alpha = alpha
+    best_alpha = alpha
+    if alpha is None:  # if no alpha is supplied then tune it
+        print(f"Tuning alpha for fold {fold}...")
+        for alpha in np.linspace(0.1, 1, 20):
+            regressor = Ridge(alpha=alpha)
+            model = Pipeline([("tfidf", encoder), ("ridge", regressor)])
+            model.fit(train_data.text, train_data.target)
+            predictions = model.predict(oof_data.text)
+            mse = mean_squared_error(oof_data.target, predictions)
+            print(f"fold: {fold} | alpha: {alpha} | mse: {mse}")
+            if mse < min_mse:
+                min_mse = mse
+                best_model = model
+                best_alpha = alpha
+    else:  # use supplied alpha to fit the regressor
+        print(f"Fitting using alpha={best_alpha}...")
+        regressor = Ridge(alpha=best_alpha)
+        best_model = Pipeline([("tfidf", encoder), ("ridge", regressor)])
+        best_model.fit(train_data.text, train_data.target)
+        predictions = best_model.predict(oof_data.text)
+        min_mse = mean_squared_error(oof_data.target, predictions)
     print(f"best model | alpha: {best_alpha} | mse: {min_mse}\n")
     return best_model, min_mse
 
@@ -77,7 +89,7 @@ if __name__ == "__main__":
     for fold in range(5):
         train_data = data[data.fold != fold]
         oof_data = data[data.fold == fold]
-        model, mse = train(fold, train_data, oof_data)
+        model, mse = train(fold, train_data, oof_data, args.ridge_alpha)
         mse_scores.append(mse)
         models.append(model)
     print(f"cv mse: {np.mean(mse_scores)}")
