@@ -8,6 +8,7 @@ from tqdm import tqdm
 import os
 
 from utils import AverageMeter
+from dataset import ToxicDataset
 
 
 def parse_args() -> argparse.Namespace:
