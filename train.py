@@ -61,7 +61,7 @@ class Trainer:
         train_batch_size: int,
         valid_batch_size: int,
         dataloader_workers: int,
-        save_path: str
+        save_path: str,
     ) -> None:
         self.model = AutoModelForSequenceClassification.from_pretrained(
             checkpoint, num_labels=1
@@ -107,7 +107,9 @@ class Trainer:
                     tepoch.update(1)
             valid_loss = self.evaluate()
             if valid_loss < self.best_valid_loss:
-                print(f"Valid loss decreased from {self.best_valid_loss} to {valid_loss}. Saving.")
+                print(
+                    f"Valid loss decreased from {self.best_valid_loss} to {valid_loss}. Saving."
+                )
                 torch.save(self.model.state_dict(), self.save_path)
                 self.best_valid_loss = valid_loss
             else:
@@ -126,16 +128,13 @@ class Trainer:
                 tepoch.set_postfix({"valid_loss": valid_loss.avg})
                 tepoch.update(1)
         return valid_loss.avg
-    
-    def save(self):
-
 
 
 if __name__ == "__main__":
     args = parse_args()
     data = pd.read_csv(args.train_path)
-    train_data = data[data.fold != args.fold]
-    valid_data = data[data.fold == args.fold]
+    train_data = data.loc[data.fold != args.fold].reset_index(drop=True)
+    valid_data = data.loc[data.fold == args.fold].reset_index(drop=True)
     tokenizer = AutoTokenizer.from_pretrained(args.checkpoint)
     train_set = ToxicDataset(train_data, tokenizer)
     valid_set = ToxicDataset(valid_data, tokenizer)
@@ -148,6 +147,6 @@ if __name__ == "__main__":
         train_batch_size=args.train_batch_size,
         valid_batch_size=args.valid_batch_size,
         dataloader_workers=args.dataloader_workers,
-        save_path=args.save_path
+        save_path=args.save_path,
     )
     trainer.train()
