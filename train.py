@@ -102,6 +102,7 @@ class Trainer:
         with tqdm(total=len(self.valid_loader), unit="batches") as tepoch:
             tepoch.set_description("validation")
             for data in self.valid_loader:
+                data = {k: v.to("cuda") for k, v in data.items()}
                 output = self.model(**data)
                 loss = output.loss
                 valid_loss.update(loss.item(), self.valid_batch_size)
