@@ -34,7 +34,7 @@ class ToxicDataset(Dataset):
             "input_ids": encoded_item["input_ids"].squeeze(),
             "attention_mask": encoded_item["attention_mask"].squeeze(),
         }
-        if self.labels:
+        if self.labels is not None:
             label = self.labels.loc[index]
             inputs["labels"] = torch.tensor(label, dtype=torch.float32)
         return inputs
