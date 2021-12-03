@@ -15,8 +15,6 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--fold", type=int, default=0)
     parser.add_argument("--train_path", type=str, default="data/train.csv")
-    parser.add_argument("--valid_path", type=str, default="data/valid.csv")
-    parser.add_argument("--test_path", type=str, default="data/comments_to_score.csv")
     parser.add_argument("--save_dir", type=str, default=".")
     parser.add_argument("--epochs", type=int, default=1)
     parser.add_argument("--train_batch_size", type=int, default=32)
