@@ -19,7 +19,7 @@ class ToxicDataset(Dataset):
         self.max_length = max_length
 
     def __len__(self) -> int:
-        return len(self.data)
+        return len(self.texts)
 
     def __getitem__(self, index: int) -> Mapping[torch.Tensor, torch.Tensor]:
         item = self.texts.loc[index]
