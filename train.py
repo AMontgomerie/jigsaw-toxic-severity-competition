@@ -7,7 +7,7 @@ from transformers import AutoModelForSequenceClassification, AutoTokenizer
 from tqdm import tqdm
 import os
 
-from utils import AverageMeter
+from utils import AverageMeter, set_seed
 from dataset import ToxicDataset
 
 
@@ -24,6 +24,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--learning_rate", type=float, default=1e-5)
     parser.add_argument("--dataloader_workers", type=int, default=2)
     parser.add_argument("--checkpoint", type=str, default="roberta-base")
+    parser.add_argument("--seed", type=int, default=666)
     return parser.parse_args()
 
 
@@ -112,6 +113,7 @@ class Trainer:
 
 if __name__ == "__main__":
     args = parse_args()
+    set_seed(args.seed)
     data = pd.read_csv(args.train_path)
     train_data = data.loc[data.fold != args.fold].reset_index(drop=True)
     valid_data = data.loc[data.fold == args.fold].reset_index(drop=True)
