@@ -47,7 +47,7 @@ class ToxicDataset(Dataset):
         return {
             "input_ids": encoded_item["input_ids"].squeeze(),
             "attention_mask": encoded_item["attention_mask"].squeeze(),
-            "target": torch.tensor(item.target),
+            "labels": torch.tensor(item.target),
         }
 
 
