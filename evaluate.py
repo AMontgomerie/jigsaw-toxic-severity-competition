@@ -44,6 +44,7 @@ def evaluate(
     return sum(mean_less_toxic < mean_more_toxic) / len(data)
 
 
+@torch.no_grad()
 def predict(
     model: AutoModelForSequenceClassification, dataloader: DataLoader
 ) -> np.ndarray:
