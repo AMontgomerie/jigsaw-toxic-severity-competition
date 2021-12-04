@@ -5,11 +5,7 @@ import os
 import torch
 from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
-from transformers import AutoModelForSequenceClassification
-from transformers.models.auto.modeling_auto import (
-    AutoModelForSequenceClassification,
-    AutoTokenizer,
-)
+from transformers import AutoModelForSequenceClassification, AutoTokenizer
 import gc
 
 from dataset import ToxicDataset
