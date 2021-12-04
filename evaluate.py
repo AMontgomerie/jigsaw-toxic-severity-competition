@@ -62,7 +62,7 @@ def predict(
 def load_model(
     base_model: str, save_dir: str, fold: int
 ) -> AutoModelForSequenceClassification:
-    model = AutoModelForSequenceClassification.from_pretrained(base_model)
+    model = AutoModelForSequenceClassification.from_pretrained(base_model, num_labels=1)
     weights_path = os.path.join(save_dir, f"{base_model.replace('/', '_')}_{fold}.bin")
     model.load_state_dict(torch.load(weights_path))
     model = model.to("cuda")
