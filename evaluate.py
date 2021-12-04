@@ -78,5 +78,5 @@ def get_dataloader(dataset: Dataset) -> DataLoader:
 if __name__ == "__main__":
     args = parse_args()
     data = pd.read_csv(args.data_path)
-    ranking_score = evaluate(args.base_model, args.weights_dir, data, args.max_length)
+    ranking_score = evaluate(args.base_model, data, args.weights_dir, args.max_length)
     print(ranking_score)
