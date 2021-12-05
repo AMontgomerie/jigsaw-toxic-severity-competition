@@ -1,2 +1,9 @@
 .csv filter=lfs diff=lfs merge=lfs -text
 data/*.csv filter=lfs diff=lfs merge=lfs -text
+data/comments_to_score.csv filter=lfs diff=lfs merge=lfs -text
+data/jigsaw_toxic_comment_classification_train.csv filter=lfs diff=lfs merge=lfs -text
+data/paired_data.csv filter=lfs diff=lfs merge=lfs -text
+data/ruddit_with_text.csv filter=lfs diff=lfs merge=lfs -text
+data/train.csv filter=lfs diff=lfs merge=lfs -text
+data/extra_training_data/offenseval2020_sample.csv filter=lfs diff=lfs merge=lfs -text
+data/extra_training_data/paired_ruddit.csv filter=lfs diff=lfs merge=lfs -text
