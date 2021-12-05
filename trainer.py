@@ -113,6 +113,7 @@ class PairedTrainer(Trainer):
         valid_batch_size: int,
         dataloader_workers: int,
         save_dir: str,
+        loss_margin: float,
     ) -> None:
         super().__init__(
             fold,
@@ -140,7 +141,7 @@ class PairedTrainer(Trainer):
             pin_memory=True,
             num_workers=dataloader_workers,
         )
-        self.loss_fn = MarginRankingLoss()
+        self.loss_fn = MarginRankingLoss(loss_margin)
         self.best_valid_score = 0
 
     def train(self) -> None:
