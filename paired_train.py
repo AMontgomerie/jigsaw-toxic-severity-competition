@@ -31,7 +31,7 @@ if __name__ == "__main__":
     valid_data = data.loc[data.fold == args.fold].reset_index(drop=True)
     tokenizer = AutoTokenizer.from_pretrained(args.checkpoint)
     train_set = PairedToxicDataset(
-        train_data.text, tokenizer, args.max_length, train_data.target
+        train_data.less_toxic, train_data.more_toxic, tokenizer, args.max_length
     )
     less_toxic_valid_set = ToxicDataset(
         valid_data.less_toxic, tokenizer, args.max_length
