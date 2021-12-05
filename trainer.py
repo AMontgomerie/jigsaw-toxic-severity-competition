@@ -127,6 +127,10 @@ class PairedTrainer(Trainer):
             dataloader_workers,
             save_dir,
         )
+        assert (
+            len(less_toxic_valid_set) == len(more_toxic_valid_set),
+            "validation dataset lengths don't match!",
+        )
         self.less_toxic_valid_loader = DataLoader(
             less_toxic_valid_set,
             batch_size=valid_batch_size,
@@ -176,13 +180,13 @@ class PairedTrainer(Trainer):
                 print(f"{valid_score} is not an improvement.")
 
     def evaluate(self) -> float:
-        less_toxic_preds = self._predict(self.less_toxic_valid_loader, f"less toxic")
-        more_toxic_preds = self._predict(self.more_toxic_valid_loader, f"more toxic")
-        mean_less_toxic = np.mean(less_toxic_preds, axis=0)
-        mean_more_toxic = np.mean(more_toxic_preds, axis=0)
-        return sum(mean_less_toxic < mean_more_toxic) / len(
-            self.less_toxic_valid_loader
+        less_toxic_preds = self._predict(
+            self.less_toxic_valid_loader, f"valid (less toxic)"
         )
+        more_toxic_preds = self._predict(
+            self.more_toxic_valid_loader, f"valid (more toxic)"
+        )
+        return sum(less_toxic_preds < more_toxic_preds) / len(less_toxic_preds)
 
     @torch.no_grad()
     def _predict(
