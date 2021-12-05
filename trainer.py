@@ -27,6 +27,7 @@ class Trainer:
         save_dir: str,
         scheduler: str,
         warmup: float,
+        early_stopping_patience: int,
     ) -> None:
         self.train_loader = DataLoader(
             train_set,
@@ -58,7 +59,9 @@ class Trainer:
         self.save_path = os.path.join(
             save_dir, f"{checkpoint.replace('/', '_')}_{fold}.bin"
         )
-        self.best_valid_loss = float("inf")
+        self.best_valid_score = float("inf")
+        self.early_stopping_patience = early_stopping_patience
+        self.early_stopping_counter = 0
 
     def train(self) -> None:
         for epoch in range(1, self.epochs + 1):
@@ -77,15 +80,34 @@ class Trainer:
                     self.train_loss.update(loss.item(), self.train_batch_size)
                     tepoch.set_postfix({"train_loss": self.train_loss.avg})
                     tepoch.update(1)
-            valid_loss = self.evaluate()
-            if valid_loss < self.best_valid_loss:
+            valid_score = self.evaluate()
+            terminate = self._on_epoch_end(
+                valid_score < self.best_valid_score, valid_score
+            )
+            if terminate:
+                return
+
+    def _on_epoch_end(self, score_improved: bool, valid_score: float) -> None:
+        if score_improved:
+            print(
+                f"Valid score improved from {self.best_valid_score} to {valid_score}. Saving."
+            )
+            torch.save(self.model.state_dict(), self.save_path)
+            self.best_valid_score = valid_score
+            self.early_stopping_counter = 0
+        else:
+            if self.early_stopping_patience > 0:
+                self.early_stopping_counter += 1
                 print(
-                    f"Valid loss decreased from {self.best_valid_loss} to {valid_loss}. Saving."
+                    f"{valid_score} is not an improvement."
+                    f"Early stopping {self.early_stopping_counter}/{self.early_stopping_patience}"
                 )
-                torch.save(self.model.state_dict(), self.save_path)
-                self.best_valid_loss = valid_loss
+                if self.early_stopping_counter >= self.early_stopping_patience:
+                    print("Terminating.")
+                    return True
             else:
-                print(f"{valid_loss} is not an improvement.")
+                print(f"{valid_score} is not an improvement.")
+        return False
 
     @torch.no_grad()
     def evaluate(self) -> float:
@@ -122,6 +144,7 @@ class PairedTrainer(Trainer):
         save_dir: str,
         scheduler: str,
         warmup: float,
+        early_stopping_patience: int,
         loss_margin: float,
     ) -> None:
         super().__init__(
@@ -135,6 +158,9 @@ class PairedTrainer(Trainer):
             valid_batch_size,
             dataloader_workers,
             save_dir,
+            scheduler,
+            warmup,
+            early_stopping_patience,
         )
         on_fail = "validation dataset lengths don't match!"
         assert len(less_toxic_valid_set) == len(more_toxic_valid_set), on_fail
@@ -178,14 +204,11 @@ class PairedTrainer(Trainer):
                     tepoch.set_postfix({"train_loss": self.train_loss.avg})
                     tepoch.update(1)
             valid_score = self.evaluate()
-            if valid_score > self.best_valid_score:
-                print(
-                    f"Valid score increased from {self.best_valid_score} to {valid_score}. Saving."
-                )
-                torch.save(self.model.state_dict(), self.save_path)
-                self.best_valid_score = valid_score
-            else:
-                print(f"{valid_score} is not an improvement.")
+            terminate = self._on_epoch_end(
+                valid_score > self.best_valid_score, valid_score
+            )
+            if terminate:
+                return
 
     def evaluate(self) -> float:
         less_toxic_preds = self._predict(

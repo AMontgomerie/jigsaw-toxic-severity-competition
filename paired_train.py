@@ -23,6 +23,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--scheduler", type=str, default="constant")
     parser.add_argument("--warmup", type=float, default=0)
     parser.add_argument("--loss_margin", type=float, default=0)
+    parser.add_argument("--early_stopping_patience", type=int, default=0)
     return parser.parse_args()
 
 
