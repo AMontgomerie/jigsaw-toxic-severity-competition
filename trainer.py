@@ -185,6 +185,7 @@ class PairedTrainer(Trainer):
         more_toxic_preds = self._predict(
             self.more_toxic_valid_loader, f"valid (more toxic)"
         )
+        print(less_toxic_preds < more_toxic_preds)
         return sum(less_toxic_preds < more_toxic_preds) / len(less_toxic_preds)
 
     @torch.no_grad()
@@ -202,4 +203,4 @@ class PairedTrainer(Trainer):
                 output = self.model(**data)
                 predictions += list(output.logits.squeeze().cpu().numpy())
                 tepoch.update(1)
-        return predictions
+        return np.array(predictions)
