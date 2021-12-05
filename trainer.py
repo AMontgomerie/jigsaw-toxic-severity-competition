@@ -141,7 +141,7 @@ class PairedTrainer(Trainer):
             num_workers=dataloader_workers,
         )
         self.loss_fn = MarginRankingLoss()
-        self.target = torch.tensor(-1)
+        self.target = torch.tensor([-1] * train_batch_size)
         self.best_valid_score = 0
 
     def train(self) -> None:
