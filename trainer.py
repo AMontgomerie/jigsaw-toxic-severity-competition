@@ -153,6 +153,7 @@ class PairedTrainer(Trainer):
                     self.optimizer.zero_grad()
                     less_toxic_data = self._to_cuda(less_toxic_data)
                     more_toxic_data = self._to_cuda(more_toxic_data)
+                    target = target.to("cuda")
                     less_toxic_output = self.model(**less_toxic_data)
                     more_toxic_output = self.model(**more_toxic_data)
                     loss = self.loss_fn(
