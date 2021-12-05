@@ -7,6 +7,7 @@ from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 import gc
+from typing import List
 
 from dataset import ToxicDataset
 
@@ -47,7 +48,7 @@ def evaluate(
 @torch.no_grad()
 def predict(
     model: AutoModelForSequenceClassification, dataloader: DataLoader, name: str
-) -> np.ndarray:
+) -> List[float]:
     model.eval()
     predictions = []
     with tqdm(total=len(dataloader), unit="batches") as tepoch:
