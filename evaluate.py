@@ -32,8 +32,8 @@ def evaluate(
     more_toxic_predictions = []
     for fold in range(5):
         model = load_model(base_model, weights_dir, fold)
-        less_toxic = predict(model, less_toxic_dataloader)
-        more_toxic = predict(model, more_toxic_dataloader)
+        less_toxic = predict(model, less_toxic_dataloader, f"fold {fold}: less toxic")
+        more_toxic = predict(model, more_toxic_dataloader, f"fold {fold}: more toxic")
         less_toxic_predictions.append(less_toxic)
         more_toxic_predictions.append(more_toxic)
         del model
@@ -46,12 +46,12 @@ def evaluate(
 
 @torch.no_grad()
 def predict(
-    model: AutoModelForSequenceClassification, dataloader: DataLoader
+    model: AutoModelForSequenceClassification, dataloader: DataLoader, name: str
 ) -> np.ndarray:
     model.eval()
     predictions = []
     with tqdm(total=len(dataloader), unit="batches") as tepoch:
-        tepoch.set_description("evaluation")
+        tepoch.set_description(name)
         for data in dataloader:
             data = {k: v.to("cuda") for k, v in data.items()}
             output = model(**data)
