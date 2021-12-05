@@ -1,6 +1,7 @@
 import argparse
 import pandas as pd
 from transformers import AutoTokenizer
+import os
 
 from utils import set_seed
 from dataset import ToxicDataset, PairedToxicDataset
@@ -24,6 +25,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--warmup", type=float, default=0)
     parser.add_argument("--loss_margin", type=float, default=0)
     parser.add_argument("--early_stopping_patience", type=int, default=0)
+    parser.add_argument("--use_extra_data", dest="use_extra_data", action="store_true")
+    parser.add_argument(
+        "--extra_data_dir", type=str, default="data/extra_training_data"
+    )
     return parser.parse_args()
 
 
@@ -33,6 +38,10 @@ if __name__ == "__main__":
     data = pd.read_csv(args.train_path)
     train_data = data.loc[data.fold != args.fold].reset_index(drop=True)
     valid_data = data.loc[data.fold == args.fold].reset_index(drop=True)
+    if args.use_extra_data:
+        extra_dfs = [pd.read_csv(f) for f in os.listdir(args.extra_data_dir)]
+        extra_data = pd.concat(extra_dfs)
+        train_data = pd.concat([train_data, extra_data])
     tokenizer = AutoTokenizer.from_pretrained(args.checkpoint)
     train_set = PairedToxicDataset(
         train_data.less_toxic, train_data.more_toxic, tokenizer, args.max_length
