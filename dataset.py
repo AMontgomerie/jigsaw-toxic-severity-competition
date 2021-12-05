@@ -2,7 +2,7 @@ import pandas as pd
 import torch
 from torch.utils.data import Dataset
 from transformers import AutoTokenizer
-from typing import Mapping
+from typing import Mapping, Tuple
 
 
 class ToxicDataset(Dataset):
@@ -58,7 +58,9 @@ class PairedToxicDataset(ToxicDataset):
     def __len__(self) -> int:
         return len(self.less_toxic)
 
-    def __getitem__(self, index: int) -> Mapping[str, torch.Tensor]:
+    def __getitem__(
+        self, index: int
+    ) -> Tuple[Mapping[str, torch.Tensor], Mapping[str, torch.Tensor]]:
         less_toxic_text = self.less_toxic.loc[index]
         more_toxic_text = self.more_toxic.loc[index]
         less_toxic_inputs = self._encode(less_toxic_text)
