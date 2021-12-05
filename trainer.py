@@ -149,13 +149,12 @@ class PairedTrainer(Trainer):
             self.train_loss.reset()
             with tqdm(total=len(self.train_loader), unit="batches") as tepoch:
                 tepoch.set_description(f"epoch {epoch}")
-                for less_toxic_data, more_toxic_data in self.train_loader:
+                for less_toxic_data, more_toxic_data, target in self.train_loader:
                     self.optimizer.zero_grad()
                     less_toxic_data = self._to_cuda(less_toxic_data)
                     more_toxic_data = self._to_cuda(more_toxic_data)
                     less_toxic_output = self.model(**less_toxic_data)
                     more_toxic_output = self.model(**more_toxic_data)
-                    target = self._get_target(less_toxic_output.logits)
                     loss = self.loss_fn(
                         less_toxic_output.logits, more_toxic_output.logits, target
                     )
@@ -199,6 +198,3 @@ class PairedTrainer(Trainer):
                 predictions += list(output.logits.squeeze().cpu().numpy())
                 tepoch.update(1)
         return predictions
-
-    def _get_target(self, data: torch.Tensor) -> torch.Tensor:
-        return torch.full(data.shape, -1)
