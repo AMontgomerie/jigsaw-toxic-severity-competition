@@ -58,5 +58,6 @@ if __name__ == "__main__":
         scheduler=args.scheduler,
         warmup=args.warmup,
         loss_margin=args.loss_margin,
+        early_stopping_patience=args.early_stopping_patience,
     )
     trainer.train()
