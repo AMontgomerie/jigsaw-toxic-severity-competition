@@ -127,10 +127,9 @@ class PairedTrainer(Trainer):
             dataloader_workers,
             save_dir,
         )
-        assert (
-            len(less_toxic_valid_set) == len(more_toxic_valid_set),
-            "validation dataset lengths don't match!",
-        )
+        on_fail = "validation dataset lengths don't match!"
+        assert len(less_toxic_valid_set) == len(more_toxic_valid_set), on_fail
+
         self.less_toxic_valid_loader = DataLoader(
             less_toxic_valid_set,
             batch_size=valid_batch_size,
