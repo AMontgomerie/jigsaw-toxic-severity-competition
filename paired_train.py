@@ -44,7 +44,7 @@ if __name__ == "__main__":
             for f in os.listdir(args.extra_data_dir)
         ]
         extra_data = pd.concat([pd.read_csv(f) for f in extra_files])
-        train_data = pd.concat([train_data, extra_data])
+        train_data = pd.concat([train_data, extra_data]).reset_index(drop=True)
     tokenizer = AutoTokenizer.from_pretrained(args.checkpoint)
     train_set = PairedToxicDataset(
         train_data.less_toxic, train_data.more_toxic, tokenizer, args.max_length
