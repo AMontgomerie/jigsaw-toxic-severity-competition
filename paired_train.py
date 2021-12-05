@@ -39,8 +39,11 @@ if __name__ == "__main__":
     train_data = data.loc[data.fold != args.fold].reset_index(drop=True)
     valid_data = data.loc[data.fold == args.fold].reset_index(drop=True)
     if args.use_extra_data:
-        extra_dfs = [pd.read_csv(f) for f in os.listdir(args.extra_data_dir)]
-        extra_data = pd.concat(extra_dfs)
+        extra_files = [
+            os.path.join(args.extra_data_dir, f)
+            for f in os.listdir(args.extra_data_dir)
+        ]
+        extra_data = pd.concat([pd.read_csv(f) for f in extra_files])
         train_data = pd.concat([train_data, extra_data])
     tokenizer = AutoTokenizer.from_pretrained(args.checkpoint)
     train_set = PairedToxicDataset(
