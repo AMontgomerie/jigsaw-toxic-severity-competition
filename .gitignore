@@ -130,3 +130,4 @@ dmypy.json
 
 notebooks
 submission.csv
+.DS_Store
