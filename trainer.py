@@ -141,7 +141,6 @@ class PairedTrainer(Trainer):
             num_workers=dataloader_workers,
         )
         self.loss_fn = MarginRankingLoss()
-        self.target = torch.tensor([-1] * train_batch_size)
         self.best_valid_score = 0
 
     def train(self) -> None:
@@ -156,8 +155,9 @@ class PairedTrainer(Trainer):
                     more_toxic_data = self._to_cuda(more_toxic_data)
                     less_toxic_output = self.model(**less_toxic_data)
                     more_toxic_output = self.model(**more_toxic_data)
+                    target = self._get_target(less_toxic_output.logits)
                     loss = self.loss_fn(
-                        less_toxic_output.logits, more_toxic_output.logits, self.target
+                        less_toxic_output.logits, more_toxic_output.logits, target
                     )
                     loss.backward()
                     self.optimizer.step()
@@ -199,3 +199,6 @@ class PairedTrainer(Trainer):
                 predictions += list(output.logits.squeeze().cpu().numpy())
                 tepoch.update(1)
         return predictions
+
+    def _get_target(self, data: torch.Tensor) -> torch.Tensor:
+        return torch.full(data.size, -1)
