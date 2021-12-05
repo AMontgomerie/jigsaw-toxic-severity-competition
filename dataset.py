@@ -65,4 +65,5 @@ class PairedToxicDataset(ToxicDataset):
         more_toxic_text = self.more_toxic.loc[index]
         less_toxic_inputs = self._encode(less_toxic_text)
         more_toxic_inputs = self._encode(more_toxic_text)
-        return less_toxic_inputs, more_toxic_inputs
+        target = torch.tensor(-1)
+        return less_toxic_inputs, more_toxic_inputs, target
