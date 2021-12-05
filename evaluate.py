@@ -49,13 +49,13 @@ def predict(
     model: AutoModelForSequenceClassification, dataloader: DataLoader
 ) -> np.ndarray:
     model.eval()
-    predictions = np.array([])
+    predictions = []
     with tqdm(total=len(dataloader), unit="batches") as tepoch:
         tepoch.set_description("evaluation")
         for data in dataloader:
             data = {k: v.to("cuda") for k, v in data.items()}
             output = model(**data)
-            np.append(predictions, output.logits.cpu().numpy())
+            predictions += list(output.logits.squeeze().cpu().numpy())
             tepoch.update(1)
     return predictions
 
