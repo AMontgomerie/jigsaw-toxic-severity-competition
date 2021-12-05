@@ -19,7 +19,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--dataloader_workers", type=int, default=2)
     parser.add_argument("--checkpoint", type=str, default="roberta-base")
     parser.add_argument("--seed", type=int, default=666)
-    parser.add_argument("--max_length", type=int, default=512)
+    parser.add_argument("--max_length", type=int, default=128)
+    parser.add_argument("--scheduler", type=str, default="constant")
+    parser.add_argument("--warmup", type=float, default=0)
     parser.add_argument("--loss_margin", type=float, default=0)
     return parser.parse_args()
 
@@ -52,6 +54,8 @@ if __name__ == "__main__":
         valid_batch_size=args.valid_batch_size,
         dataloader_workers=args.dataloader_workers,
         save_dir=args.save_dir,
+        scheduler=args.scheduler,
+        warmup=args.warmup,
         loss_margin=args.loss_margin,
     )
     trainer.train()

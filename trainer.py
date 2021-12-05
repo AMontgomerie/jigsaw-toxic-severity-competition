@@ -2,7 +2,7 @@ import torch
 from torch.nn import MarginRankingLoss
 from torch.optim import AdamW
 from torch.utils.data import Dataset, DataLoader
-from transformers import AutoModelForSequenceClassification
+from transformers import AutoModelForSequenceClassification, get_scheduler
 from tqdm import tqdm
 import os
 import numpy as np
@@ -25,12 +25,9 @@ class Trainer:
         valid_batch_size: int,
         dataloader_workers: int,
         save_dir: str,
+        scheduler: str,
+        warmup: float,
     ) -> None:
-        self.model = AutoModelForSequenceClassification.from_pretrained(
-            checkpoint, num_labels=1
-        )
-        self.model = self.model.to("cuda")
-        self.optimizer = AdamW(self.model.parameters(), lr=learning_rate)
         self.train_loader = DataLoader(
             train_set,
             batch_size=train_batch_size,
@@ -44,6 +41,15 @@ class Trainer:
             shuffle=False,
             pin_memory=True,
             num_workers=dataloader_workers,
+        )
+        self.model = AutoModelForSequenceClassification.from_pretrained(
+            checkpoint, num_labels=1
+        )
+        self.model = self.model.to("cuda")
+        self.optimizer = AdamW(self.model.parameters(), lr=learning_rate)
+        num_warmup_steps = round(len(self.train_loader) * warmup)
+        self.scheduler = get_scheduler(
+            scheduler, self.optimizer, num_warmup_steps, len(self.train_loader)
         )
         self.train_loss = AverageMeter()
         self.epochs = epochs
@@ -67,6 +73,7 @@ class Trainer:
                     loss = output.loss
                     loss.backward()
                     self.optimizer.step()
+                    self.scheduler.step()
                     self.train_loss.update(loss.item(), self.train_batch_size)
                     tepoch.set_postfix({"train_loss": self.train_loss.avg})
                     tepoch.update(1)
@@ -113,6 +120,8 @@ class PairedTrainer(Trainer):
         valid_batch_size: int,
         dataloader_workers: int,
         save_dir: str,
+        scheduler: str,
+        warmup: float,
         loss_margin: float,
     ) -> None:
         super().__init__(
@@ -129,7 +138,6 @@ class PairedTrainer(Trainer):
         )
         on_fail = "validation dataset lengths don't match!"
         assert len(less_toxic_valid_set) == len(more_toxic_valid_set), on_fail
-
         self.less_toxic_valid_loader = DataLoader(
             less_toxic_valid_set,
             batch_size=valid_batch_size,
@@ -165,6 +173,7 @@ class PairedTrainer(Trainer):
                     )
                     loss.backward()
                     self.optimizer.step()
+                    self.scheduler.step()
                     self.train_loss.update(loss.item(), self.train_batch_size)
                     tepoch.set_postfix({"train_loss": self.train_loss.avg})
                     tepoch.update(1)
