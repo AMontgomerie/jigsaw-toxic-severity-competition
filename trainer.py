@@ -156,7 +156,7 @@ class PairedTrainer(Trainer):
                     more_toxic_data = self._to_cuda(more_toxic_data)
                     less_toxic_output = self.model(**less_toxic_data)
                     more_toxic_output = self.model(**more_toxic_data)
-                    loss = self._loss_fn(
+                    loss = self.loss_fn(
                         less_toxic_output.logits, more_toxic_output.logits, self.target
                     )
                     loss.backward()
