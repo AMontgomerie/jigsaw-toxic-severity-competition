@@ -95,7 +95,7 @@ class Trainer:
                 tepoch.update(1)
         return valid_loss.avg
 
-    def _to_cuda(data: Mapping[str, torch.Tensor]) -> Mapping[str, torch.Tensor]:
+    def _to_cuda(self, data: Mapping[str, torch.Tensor]) -> Mapping[str, torch.Tensor]:
         return {k: v.to("cuda") for k, v in data.items()}
 
 
