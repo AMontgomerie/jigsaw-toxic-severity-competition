@@ -99,7 +99,7 @@ class Trainer:
             if self.early_stopping_patience > 0:
                 self.early_stopping_counter += 1
                 print(
-                    f"{valid_score} is not an improvement."
+                    f"{valid_score} is not an improvement. "
                     f"Early stopping {self.early_stopping_counter}/{self.early_stopping_patience}"
                 )
                 if self.early_stopping_counter >= self.early_stopping_patience:
