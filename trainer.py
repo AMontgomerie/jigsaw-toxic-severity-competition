@@ -201,4 +201,4 @@ class PairedTrainer(Trainer):
         return predictions
 
     def _get_target(self, data: torch.Tensor) -> torch.Tensor:
-        return torch.full(data.size, -1)
+        return torch.full(data.shape, -1)
