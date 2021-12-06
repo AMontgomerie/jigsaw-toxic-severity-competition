@@ -13,12 +13,12 @@ from dataset import ToxicDataset
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--save_dir", type=str, required=True)
+    parser.add_argument("--save_dir", type=str, required="./submission.csv")
     parser.add_argument("--base_model", type=str, default="roberta-base")
     parser.add_argument("--base_model_name", type=str, default="roberta-base")
     parser.add_argument("--weights_dir", type=str, default=".")
     parser.add_argument("--data_path", type=str, default="data/valid.csv")
-    parser.add_argument("--max_length", type=int, default=512)
+    parser.add_argument("--max_length", type=int, default=128)
     parser.add_argument("--batch_size", type=int, default=256)
     parser.add_argument("--dataloader_workers", type=int, default=2)
     return parser.parse_args()
@@ -71,7 +71,7 @@ if __name__ == "__main__":
     scores = []
     for fold in range(5):
         model = load_model(
-            args.base_model, args.base_model_name, args.weights_dir, args.fold
+            args.base_model, args.base_model_name, args.weights_dir, fold
         )
         ranking_score = predict(
             model,
