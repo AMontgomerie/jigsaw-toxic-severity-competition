@@ -52,16 +52,6 @@ def predict(
     return predictions
 
 
-def load_model_weights(
-    model: AutoModelForSequenceClassification,
-    base_model_name: str,
-    weights_dir: str,
-    fold: int,
-) -> AutoModelForSequenceClassification:
-
-    return model
-
-
 if __name__ == "__main__":
     args = parse_args()
     tokenizer = AutoTokenizer.from_pretrained(args.base_model)
