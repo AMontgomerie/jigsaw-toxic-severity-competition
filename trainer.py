@@ -187,7 +187,7 @@ class PairedTrainer(Trainer):
         self.best_valid_score = 0
         self.wandb_train_loss = AverageMeter()
 
-    def train(self) -> None:
+    def train(self) -> float:
         wandb.watch(self.model, self.loss_fn, log="all", log_freq=self.log_interval)
         wandb.log({"valid_score": 0})
         global_step = 1
@@ -227,7 +227,8 @@ class PairedTrainer(Trainer):
                 valid_score > self.best_valid_score, valid_score
             )
             if terminate:
-                return
+                return self.best_valid_score
+        return self.best_valid_score
 
     def evaluate(self) -> float:
         less_toxic_preds = self._predict(

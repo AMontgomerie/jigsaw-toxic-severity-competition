@@ -87,4 +87,5 @@ if __name__ == "__main__":
             early_stopping_patience=config.early_stopping_patience,
             log_interval=config.log_interval,
         )
-        trainer.train()
+        best_valid_score = trainer.train()
+        print(f"Best valid score: {best_valid_score:.3f}")
