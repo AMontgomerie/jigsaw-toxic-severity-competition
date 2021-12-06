@@ -30,6 +30,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--extra_data_dir", type=str, default="data/extra_training_data"
     )
+    parser.add_argument("--log_interval", type=int, default=100)
     return parser.parse_args()
 
 
@@ -78,5 +79,6 @@ if __name__ == "__main__":
             warmup=config.warmup,
             loss_margin=config.loss_margin,
             early_stopping_patience=config.early_stopping_patience,
+            log_interval=config.log_interval,
         )
         trainer.train()
