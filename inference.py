@@ -2,6 +2,7 @@ import argparse
 import pandas as pd
 import numpy as np
 import os
+import gc
 import torch
 from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
@@ -51,27 +52,32 @@ def predict(
     return predictions
 
 
-def load_model(
-    base_model: str, base_model_name: str, weights_dir: str, fold: int
+def load_model_weights(
+    model: AutoModelForSequenceClassification,
+    base_model_name: str,
+    weights_dir: str,
+    fold: int,
 ) -> AutoModelForSequenceClassification:
-    model = AutoModelForSequenceClassification.from_pretrained(base_model, num_labels=1)
-    weights_path = os.path.join(
-        weights_dir, f"{base_model_name.replace('/', '_')}_{fold}.bin"
-    )
-    model.load_state_dict(torch.load(weights_path))
-    model = model.to("cuda")
+
     return model
 
 
 if __name__ == "__main__":
     args = parse_args()
     tokenizer = AutoTokenizer.from_pretrained(args.base_model)
+    model = AutoModelForSequenceClassification.from_pretrained(
+        args.base_model, num_labels=1
+    )
+    model = model.to("cuda")
     data = pd.read_csv(args.data_path)
     dataset = ToxicDataset(data.text, tokenizer, args.max_length)
     scores = []
     for fold in range(5):
-        model = load_model(
-            args.base_model, args.base_model_name, args.weights_dir, fold
+        weights_path = os.path.join(
+            args.weights_dir, f"{args.base_model_name.replace('/', '_')}_{fold}.bin"
+        )
+        model.load_state_dict(
+            torch.load(weights_path), map_location=torch.device("cuda")
         )
         ranking_score = predict(
             model,
