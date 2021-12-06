@@ -40,10 +40,11 @@ if __name__ == "__main__":
     config = vars(args)
     if config["use_extra_data"]:
         extra_files = [
-            os.path.join(config.extra_data_dir, f)
-            for f in os.listdir(config.extra_data_dir)
+            os.path.join(config["extra_data_dir"], f)
+            for f in os.listdir(config["extra_data_dir"])
         ]
         config["extra_files"] = extra_files
+    print(config)
     with wandb.init(project="jigsaw-paired-train", config=config):
         config = wandb.config
         set_seed(config.seed)

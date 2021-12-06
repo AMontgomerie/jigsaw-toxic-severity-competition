@@ -29,7 +29,6 @@ class Trainer:
         scheduler: str,
         warmup: float,
         early_stopping_patience: int,
-        wandb: bool,
     ) -> None:
         self.train_loader = DataLoader(
             train_set,
@@ -64,7 +63,6 @@ class Trainer:
         self.best_valid_score = float("inf")
         self.early_stopping_patience = early_stopping_patience
         self.early_stopping_counter = 0
-        self.wandb = wandb
 
     def train(self) -> None:
         for epoch in range(1, self.epochs + 1):
@@ -149,7 +147,6 @@ class PairedTrainer(Trainer):
         warmup: float,
         early_stopping_patience: int,
         loss_margin: float,
-        wandb: bool,
     ) -> None:
         super().__init__(
             fold,
@@ -165,7 +162,6 @@ class PairedTrainer(Trainer):
             scheduler,
             warmup,
             early_stopping_patience,
-            wandb,
         )
         on_fail = "validation dataset lengths don't match!"
         assert len(less_toxic_valid_set) == len(more_toxic_valid_set), on_fail
@@ -187,8 +183,7 @@ class PairedTrainer(Trainer):
         self.best_valid_score = 0
 
     def train(self) -> None:
-        if self.wandb:
-            wandb.watch(self.model, self.loss_fn, log="all", log_freq=10)
+        wandb.watch(self.model, self.loss_fn, log="all", log_freq=10)
         for epoch in range(1, self.epochs + 1):
             self.model.train()
             self.train_loss.reset()
@@ -210,16 +205,14 @@ class PairedTrainer(Trainer):
                     self.optimizer.step()
                     self.scheduler.step()
                     self.train_loss.update(loss.item(), self.train_batch_size)
-                    if self.wandb:
-                        wandb.log(
-                            {"epoch": epoch, "train_loss": self.train_loss.avg},
-                            step=step,
-                        )
+                    wandb.log(
+                        {"epoch": epoch, "train_loss": self.train_loss.avg},
+                        step=step + len(self.train_loader) * self.epochs,
+                    )
                     tepoch.set_postfix({"train_loss": self.train_loss.avg})
                     tepoch.update(1)
             valid_score = self.evaluate()
-            if self.wandb:
-                wandb.log({"valid_score": valid_score})
+            wandb.log({"valid_score": valid_score})
             terminate = self._on_epoch_end(
                 valid_score > self.best_valid_score, valid_score
             )
