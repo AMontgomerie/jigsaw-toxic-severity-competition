@@ -185,6 +185,7 @@ class PairedTrainer(Trainer):
         )
         self.loss_fn = MarginRankingLoss(loss_margin)
         self.best_valid_score = 0
+        self.wandb_train_loss = AverageMeter()
 
     def train(self) -> None:
         wandb.watch(self.model, self.loss_fn, log="all", log_freq=10)
@@ -208,11 +209,13 @@ class PairedTrainer(Trainer):
                     self.optimizer.step()
                     self.scheduler.step()
                     self.train_loss.update(loss.item(), self.train_batch_size)
+                    self.wandb_train_loss.update(loss.item(), self.train_batch_size)
                     if global_step % self.log_interval == 0:
                         wandb.log(
-                            {"epoch": epoch, "train_loss": self.train_loss.avg},
+                            {"epoch": epoch, "train_loss": self.wandb_train_loss.avg},
                             step=global_step,
                         )
+                        self.wandb_train_loss.reset()
                     tepoch.set_postfix({"train_loss": self.train_loss.avg})
                     tepoch.update(1)
                     global_step += 1
