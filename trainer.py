@@ -188,9 +188,9 @@ class PairedTrainer(Trainer):
         self.wandb_train_loss = AverageMeter()
 
     def train(self) -> None:
-        wandb.watch(self.model, self.loss_fn, log="all", log_freq=10)
+        wandb.watch(self.model, self.loss_fn, log="all", log_freq=self.log_interval)
         wandb.log({"valid_score": 0})
-        global_step = 0
+        global_step = 1
         for epoch in range(1, self.epochs + 1):
             self.model.train()
             self.train_loss.reset()
