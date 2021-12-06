@@ -67,9 +67,8 @@ if __name__ == "__main__":
             args.weights_dir, f"{args.base_model_name.replace('/', '_')}_{fold}.bin"
         )
         print(f"Loading {weights_path}.")
-        model.load_state_dict(
-            torch.load(weights_path), map_location=torch.device("cuda")
-        )
+        state_dict = torch.load(weights_path, map_location=torch.device("cuda"))
+        model.load_state_dict(state_dict)
         ranking_score = predict(
             model,
             dataset,
