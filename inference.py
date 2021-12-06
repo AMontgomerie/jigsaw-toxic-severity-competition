@@ -66,6 +66,7 @@ if __name__ == "__main__":
         weights_path = os.path.join(
             args.weights_dir, f"{args.base_model_name.replace('/', '_')}_{fold}.bin"
         )
+        print(f"Loading {weights_path}.")
         model.load_state_dict(
             torch.load(weights_path), map_location=torch.device("cuda")
         )
