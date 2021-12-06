@@ -11,6 +11,7 @@ import wandb
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
+    parser.add_argument("--run_id", type=int, required=True)
     parser.add_argument("--fold", type=int, default=0)
     parser.add_argument("--train_path", type=str, default="data/train.csv")
     parser.add_argument("--save_dir", type=str, default=".")
@@ -44,7 +45,11 @@ if __name__ == "__main__":
         ]
         config["extra_files"] = extra_files
     wandb.login()
-    with wandb.init(project="jigsaw-paired-train", config=config):
+    with wandb.init(
+        project="jigsaw-paired-train",
+        name=f"{args.run_id}_{args.checkpoint}_fold_{args.fold}",
+        config=config,
+    ):
         config = wandb.config
         set_seed(config.seed)
         data = pd.read_csv(config.train_path)
