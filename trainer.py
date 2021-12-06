@@ -207,7 +207,7 @@ class PairedTrainer(Trainer):
                     self.train_loss.update(loss.item(), self.train_batch_size)
                     wandb.log(
                         {"epoch": epoch, "train_loss": self.train_loss.avg},
-                        step=step + len(self.train_loader) * self.epochs,
+                        step=step + (len(self.train_loader) * (self.epochs - 1)),
                     )
                     tepoch.set_postfix({"train_loss": self.train_loss.avg})
                     tepoch.update(1)
