@@ -6,6 +6,9 @@ import os
 from utils import set_seed
 from dataset import ToxicDataset, PairedToxicDataset
 from trainer import PairedTrainer
+import wandb
+
+wandb.login()
 
 
 def parse_args() -> argparse.Namespace:
@@ -34,42 +37,45 @@ def parse_args() -> argparse.Namespace:
 
 if __name__ == "__main__":
     args = parse_args()
-    set_seed(args.seed)
-    data = pd.read_csv(args.train_path)
-    train_data = data.loc[data.fold != args.fold].reset_index(drop=True)
-    valid_data = data.loc[data.fold == args.fold].reset_index(drop=True)
-    if args.use_extra_data:
-        extra_files = [
-            os.path.join(args.extra_data_dir, f)
-            for f in os.listdir(args.extra_data_dir)
-        ]
-        extra_data = pd.concat([pd.read_csv(f) for f in extra_files])
-        train_data = pd.concat([train_data, extra_data]).reset_index(drop=True)
-    tokenizer = AutoTokenizer.from_pretrained(args.checkpoint)
-    train_set = PairedToxicDataset(
-        train_data.less_toxic, train_data.more_toxic, tokenizer, args.max_length
-    )
-    less_toxic_valid_set = ToxicDataset(
-        valid_data.less_toxic, tokenizer, args.max_length
-    )
-    more_toxic_valid_set = ToxicDataset(
-        valid_data.more_toxic, tokenizer, args.max_length
-    )
-    trainer = PairedTrainer(
-        fold=args.fold,
-        checkpoint=args.checkpoint,
-        epochs=args.epochs,
-        learning_rate=args.learning_rate,
-        train_set=train_set,
-        less_toxic_valid_set=less_toxic_valid_set,
-        more_toxic_valid_set=more_toxic_valid_set,
-        train_batch_size=args.train_batch_size,
-        valid_batch_size=args.valid_batch_size,
-        dataloader_workers=args.dataloader_workers,
-        save_dir=args.save_dir,
-        scheduler=args.scheduler,
-        warmup=args.warmup,
-        loss_margin=args.loss_margin,
-        early_stopping_patience=args.early_stopping_patience,
-    )
-    trainer.train()
+    with wandb.init(project="jigsaw-paired-train", config=vars(args)):
+        config = wandb.config
+        set_seed(config.seed)
+        data = pd.read_csv(config.train_path)
+        train_data = data.loc[data.fold != config.fold].reset_index(drop=True)
+        valid_data = data.loc[data.fold == config.fold].reset_index(drop=True)
+        if config.use_extra_data:
+            extra_files = [
+                os.path.join(config.extra_data_dir, f)
+                for f in os.listdir(config.extra_data_dir)
+            ]
+            extra_data = pd.concat([pd.read_csv(f) for f in extra_files])
+            train_data = pd.concat([train_data, extra_data]).reset_index(drop=True)
+        tokenizer = AutoTokenizer.from_pretrained(config.checkpoint)
+        train_set = PairedToxicDataset(
+            train_data.less_toxic, train_data.more_toxic, tokenizer, config.max_length
+        )
+        less_toxic_valid_set = ToxicDataset(
+            valid_data.less_toxic, tokenizer, config.max_length
+        )
+        more_toxic_valid_set = ToxicDataset(
+            valid_data.more_toxic, tokenizer, config.max_length
+        )
+        trainer = PairedTrainer(
+            fold=config.fold,
+            checkpoint=config.checkpoint,
+            epochs=config.epochs,
+            learning_rate=config.learning_rate,
+            train_set=train_set,
+            less_toxic_valid_set=less_toxic_valid_set,
+            more_toxic_valid_set=more_toxic_valid_set,
+            train_batch_size=config.train_batch_size,
+            valid_batch_size=config.valid_batch_size,
+            dataloader_workers=config.dataloader_workers,
+            save_dir=config.save_dir,
+            scheduler=config.scheduler,
+            warmup=config.warmup,
+            loss_margin=config.loss_margin,
+            early_stopping_patience=config.early_stopping_patience,
+            wandb=True,
+        )
+        trainer.train()
