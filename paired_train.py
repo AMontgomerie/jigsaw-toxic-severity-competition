@@ -8,8 +8,6 @@ from dataset import ToxicDataset, PairedToxicDataset
 from trainer import PairedTrainer
 import wandb
 
-wandb.login()
-
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
@@ -44,7 +42,7 @@ if __name__ == "__main__":
             for f in os.listdir(config["extra_data_dir"])
         ]
         config["extra_files"] = extra_files
-    print(config)
+    wandb.login()
     with wandb.init(project="jigsaw-paired-train", config=config):
         config = wandb.config
         set_seed(config.seed)
@@ -80,6 +78,5 @@ if __name__ == "__main__":
             warmup=config.warmup,
             loss_margin=config.loss_margin,
             early_stopping_patience=config.early_stopping_patience,
-            wandb=True,
         )
         trainer.train()
