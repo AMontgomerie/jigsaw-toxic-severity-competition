@@ -6,7 +6,6 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
-import gc
 from typing import List
 
 from dataset import ToxicDataset
@@ -68,7 +67,7 @@ if __name__ == "__main__":
     args = parse_args()
     tokenizer = AutoTokenizer.from_pretrained(args.base_model)
     data = pd.read_csv(args.data_path)
-    dataset = ToxicDataset(data.text)
+    dataset = ToxicDataset(data.text, tokenizer, args.max_length)
     scores = []
     for fold in range(5):
         model = load_model(
