@@ -37,17 +37,20 @@ def parse_args() -> argparse.Namespace:
 
 if __name__ == "__main__":
     args = parse_args()
-    with wandb.init(project="jigsaw-paired-train", config=vars(args)):
+    config = vars(args)
+    if config["use_extra_data"]:
+        extra_files = [
+            os.path.join(config.extra_data_dir, f)
+            for f in os.listdir(config.extra_data_dir)
+        ]
+        config["extra_files"] = extra_files
+    with wandb.init(project="jigsaw-paired-train", config=config):
         config = wandb.config
         set_seed(config.seed)
         data = pd.read_csv(config.train_path)
         train_data = data.loc[data.fold != config.fold].reset_index(drop=True)
         valid_data = data.loc[data.fold == config.fold].reset_index(drop=True)
         if config.use_extra_data:
-            extra_files = [
-                os.path.join(config.extra_data_dir, f)
-                for f in os.listdir(config.extra_data_dir)
-            ]
             extra_data = pd.concat([pd.read_csv(f) for f in extra_files])
             train_data = pd.concat([train_data, extra_data]).reset_index(drop=True)
         tokenizer = AutoTokenizer.from_pretrained(config.checkpoint)
