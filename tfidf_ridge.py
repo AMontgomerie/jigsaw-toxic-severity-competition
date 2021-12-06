@@ -15,15 +15,24 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--test_path", type=str, default="data/comments_to_score.csv")
     parser.add_argument("--save_path", type=str, default="./submission.csv")
     parser.add_argument("--ridge_alpha", type=float, default=None)
+    parser.add_argument("--max_df", type=float, default=0.8),
+    parser.add_argument("--ngram_min", type=int, default=1),
+    parser.add_argument("--ngram_max", type=int, default=2)
     return parser.parse_args()
 
 
 def train(
-    fold: int, train_data: pd.DataFrame, oof_data: pd.DataFrame, alpha: float = None
+    fold: int,
+    train_data: pd.DataFrame,
+    oof_data: pd.DataFrame,
+    max_df: float,
+    ngram_min: int,
+    ngram_max: int,
+    alpha: float = None,
 ) -> Pipeline:
     encoder = TfidfVectorizer(
-        max_df=0.8,
-        ngram_range=(1, 2),
+        max_df=max_df,
+        ngram_range=(ngram_min, ngram_max),
     )
     min_mse = float("inf")
     best_model = None
@@ -89,7 +98,15 @@ if __name__ == "__main__":
     for fold in range(5):
         train_data = data[data.fold != fold]
         oof_data = data[data.fold == fold]
-        model, mse = train(fold, train_data, oof_data, args.ridge_alpha)
+        model, mse = train(
+            fold,
+            train_data,
+            oof_data,
+            args.max_df,
+            args.ngram_min,
+            args.ngram_max,
+            args.ridge_alpha,
+        )
         mse_scores.append(mse)
         models.append(model)
     print(f"cv mse: {np.mean(mse_scores)}")
