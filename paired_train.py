@@ -47,7 +47,7 @@ if __name__ == "__main__":
     wandb.login()
     with wandb.init(
         project="jigsaw-paired-train",
-        group=args.group_id,
+        group=str(args.group_id),
         name=f"{args.group_id}-{args.checkpoint}-fold-{args.fold}",
         config=config,
     ):
