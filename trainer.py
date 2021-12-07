@@ -2,6 +2,7 @@ import torch
 from torch.nn import MarginRankingLoss
 from torch.optim import AdamW
 from torch.utils.data import Dataset, DataLoader
+from torch.cuda import amp
 from transformers import AutoModelForSequenceClassification, get_scheduler
 from tqdm import tqdm
 import os
@@ -186,6 +187,7 @@ class PairedTrainer(Trainer):
         self.loss_fn = MarginRankingLoss(loss_margin)
         self.best_valid_score = 0
         self.wandb_train_loss = AverageMeter()
+        self.scaler = amp.GradScaler()
 
     def train(self) -> float:
         wandb.watch(self.model, self.loss_fn, log="all", log_freq=self.log_interval)
@@ -202,13 +204,15 @@ class PairedTrainer(Trainer):
                     less_toxic_data = self._to_cuda(less_toxic_data)
                     more_toxic_data = self._to_cuda(more_toxic_data)
                     target = target.to("cuda")
-                    less_toxic_output = self.model(**less_toxic_data)
-                    more_toxic_output = self.model(**more_toxic_data)
-                    loss = self.loss_fn(
-                        less_toxic_output.logits, more_toxic_output.logits, target
-                    )
-                    loss.backward()
-                    self.optimizer.step()
+                    with amp.autocast():
+                        less_toxic_output = self.model(**less_toxic_data)
+                        more_toxic_output = self.model(**more_toxic_data)
+                        loss = self.loss_fn(
+                            less_toxic_output.logits, more_toxic_output.logits, target
+                        )
+                        self.scaler.scale(loss).backward()
+                    self.scaler.step(self.optimizer)
+                    self.scaler.update()
                     self.scheduler.step()
                     self.train_loss.update(loss.item(), self.train_batch_size)
                     self.wandb_train_loss.update(loss.item(), self.train_batch_size)
