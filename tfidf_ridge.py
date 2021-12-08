@@ -15,6 +15,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--test_path", type=str, default="data/comments_to_score.csv")
     parser.add_argument("--save_path", type=str, default="./submission.csv")
     parser.add_argument("--ridge_alpha", type=float, default=None)
+    parser.add_argument("--tokenization_scheme", type=str, default="word")
+    parser.add_argument("--min_df", type=int, default=0)
     parser.add_argument("--max_df", type=float, default=0.8),
     parser.add_argument("--ngram_min", type=int, default=1),
     parser.add_argument("--ngram_max", type=int, default=2)
@@ -25,12 +27,16 @@ def train(
     fold: int,
     train_data: pd.DataFrame,
     oof_data: pd.DataFrame,
+    tokenization_scheme: str,
+    min_df: int,
     max_df: float,
     ngram_min: int,
     ngram_max: int,
     alpha: float = None,
 ) -> Pipeline:
     encoder = TfidfVectorizer(
+        analyzer=tokenization_scheme,
+        min_df=min_df,
         max_df=max_df,
         ngram_range=(ngram_min, ngram_max),
     )
@@ -102,6 +108,8 @@ if __name__ == "__main__":
             fold,
             train_data,
             oof_data,
+            args.tokenization_scheme,
+            args.min_df,
             args.max_df,
             args.ngram_min,
             args.ngram_max,
