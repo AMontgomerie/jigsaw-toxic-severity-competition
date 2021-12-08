@@ -78,20 +78,13 @@ def test(models: List[Pipeline], test_data: pd.DataFrame) -> float:
     return sum(mean_less_toxic < mean_more_toxic) / len(test_data)
 
 
-def predict(
-    models: List[Pipeline], test_data: pd.DataFrame, submission_path: str
-) -> None:
+def predict(models: List[Pipeline], test_data: pd.DataFrame) -> np.ndarray:
     print("Generating predictions...")
     fold_predictions = []
     for model in models:
         predictions = model.predict(test_data.text)
         fold_predictions.append(predictions)
-    mean_predictions = np.mean(fold_predictions, axis=0)
-    submission = pd.DataFrame(
-        {"comment_id": test_data.comment_id, "score": mean_predictions}
-    )
-    submission.to_csv(submission_path, index=False)
-    print(f"Saved predictions to {submission_path}")
+    return np.mean(fold_predictions, axis=0)
 
 
 if __name__ == "__main__":
@@ -120,4 +113,10 @@ if __name__ == "__main__":
     print(f"cv mse: {np.mean(mse_scores)}")
     test_score = test(models, valid_data)
     print(f"ranking test score (mean of 5 folds): {test_score}")
-    predict(models, test_data, args.save_path)
+    predictions = predict(models, test_data)
+    submission = pd.DataFrame(
+        {"comment_id": test_data.comment_id, "score": predictions}
+    )
+    submission["score"] = submission.score.rank()
+    submission.to_csv(args.save_path, index=False)
+    print(f"Saved predictions to {args.save_path}")
