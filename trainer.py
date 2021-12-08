@@ -51,12 +51,13 @@ class Trainer:
         )
         self.model = self.model.to("cuda")
         self.optimizer = AdamW(self.model.parameters(), lr=learning_rate)
-        num_warmup_steps = round(len(self.train_loader) * warmup)
+        self.epochs = epochs
+        total_steps = len(self.train_loader) * self.epochs
+        num_warmup_steps = round(total_steps * warmup)
         self.scheduler = get_scheduler(
-            scheduler, self.optimizer, num_warmup_steps, len(self.train_loader)
+            scheduler, self.optimizer, num_warmup_steps, total_steps
         )
         self.train_loss = AverageMeter()
-        self.epochs = epochs
         self.train_batch_size = train_batch_size
         self.valid_batch_size = valid_batch_size
         self.save_path = os.path.join(
