@@ -78,5 +78,4 @@ if __name__ == "__main__":
         scores.append(ranking_score)
     mean_scores = np.mean(scores, axis=0)
     submission = pd.DataFrame({"comment_id": data.comment_id, "score": mean_scores})
-    submission["score"] = submission.score.rank()
     submission.to_csv(args.save_path, index=False)
