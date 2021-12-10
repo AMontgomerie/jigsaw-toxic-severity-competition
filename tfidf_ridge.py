@@ -6,6 +6,8 @@ from sklearn.linear_model import Ridge
 from sklearn.metrics import mean_squared_error
 from sklearn.pipeline import Pipeline
 from typing import List
+import joblib
+import os
 
 
 def parse_args() -> argparse.Namespace:
@@ -13,7 +15,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--train_path", type=str, default="data/train.csv")
     parser.add_argument("--valid_path", type=str, default="data/valid.csv")
     parser.add_argument("--test_path", type=str, default="data/comments_to_score.csv")
-    parser.add_argument("--save_path", type=str, default="./submission.csv")
+    parser.add_argument("--model_save_dir", type=str, default=".")
+    parser.add_argument("--data_save_path", type=str, default="./submission.csv")
     parser.add_argument("--ridge_alpha", type=float, default=None)
     parser.add_argument("--tokenization_scheme", type=str, default="word")
     parser.add_argument("--min_df", type=int, default=0)
@@ -87,6 +90,11 @@ def predict(models: List[Pipeline], test_data: pd.DataFrame) -> np.ndarray:
     return np.mean(fold_predictions, axis=0)
 
 
+def save_model(model: Pipeline, fold: int, save_dir: str) -> None:
+    save_path = os.path.join(save_dir, f"tfidf_ridge_fold_{fold}.pkl")
+    joblib.dump(model, save_path)
+
+
 if __name__ == "__main__":
     args = parse_args()
     data = pd.read_csv(args.train_path)
@@ -110,6 +118,7 @@ if __name__ == "__main__":
         )
         mse_scores.append(mse)
         models.append(model)
+        save_model(model, fold, args.model_save_dir)
     print(f"cv mse: {np.mean(mse_scores)}")
     test_score = test(models, valid_data)
     print(f"ranking test score (mean of 5 folds): {test_score}")
