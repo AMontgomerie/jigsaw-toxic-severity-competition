@@ -57,7 +57,7 @@ def train(
                 best_model = model
                 best_alpha = alpha
     else:  # use supplied alpha to fit the regressor
-        print(f"Fitting using alpha={best_alpha}...")
+        print(f"Fitting fold {fold} using alpha={best_alpha}...")
         regressor = Ridge(alpha=best_alpha)
         best_model = Pipeline([("tfidf", encoder), ("ridge", regressor)])
         best_model.fit(train_data.text, train_data.target)
