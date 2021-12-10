@@ -131,5 +131,5 @@ dmypy.json
 notebooks
 submission.csv
 .DS_Store
-data/task_a_distant.tsv
+data
 wandb

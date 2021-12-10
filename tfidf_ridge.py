@@ -117,6 +117,5 @@ if __name__ == "__main__":
     submission = pd.DataFrame(
         {"comment_id": test_data.comment_id, "score": predictions}
     )
-    submission["score"] = submission.score.rank()
     submission.to_csv(args.save_path, index=False)
     print(f"Saved predictions to {args.save_path}")
