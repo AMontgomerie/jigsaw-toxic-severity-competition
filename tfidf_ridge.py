@@ -16,7 +16,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--valid_path", type=str, default="data/valid.csv")
     parser.add_argument("--test_path", type=str, default="data/comments_to_score.csv")
     parser.add_argument("--model_save_dir", type=str, default=".")
-    parser.add_argument("--data_save_path", type=str, default="./submission.csv")
+    parser.add_argument("--pred_save_path", type=str, default="./submission.csv")
     parser.add_argument("--ridge_alpha", type=float, default=None)
     parser.add_argument("--tokenization_scheme", type=str, default="word")
     parser.add_argument("--min_df", type=int, default=0)
@@ -127,4 +127,4 @@ if __name__ == "__main__":
         {"comment_id": test_data.comment_id, "score": predictions}
     )
     submission.to_csv(args.save_path, index=False)
-    print(f"Saved predictions to {args.save_path}")
+    print(f"Saved predictions to {args.pred_save_path}")
