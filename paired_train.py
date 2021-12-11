@@ -32,6 +32,7 @@ def parse_args() -> argparse.Namespace:
         "--extra_data_dir", type=str, default="data/extra_training_data"
     )
     parser.add_argument("--log_interval", type=int, default=100)
+    parser.add_argument("--weight_decay", type=float, default=0.0)
     return parser.parse_args()
 
 
@@ -90,6 +91,7 @@ if __name__ == "__main__":
             loss_margin=config.loss_margin,
             early_stopping_patience=config.early_stopping_patience,
             log_interval=config.log_interval,
+            weight_decay=config.weight_decay,
         )
         best_valid_score = trainer.train()
         print(f"Best valid score: {best_valid_score:.3f}")

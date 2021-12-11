@@ -33,6 +33,7 @@ class Trainer:
         warmup: float,
         early_stopping_patience: int,
         log_interval: int,
+        weight_decay: float,
     ) -> None:
         self.train_loader = DataLoader(
             train_set,
@@ -50,7 +51,9 @@ class Trainer:
         )
         self.model = model
         self.model = self.model.to("cuda")
-        self.optimizer = AdamW(self.model.parameters(), lr=learning_rate)
+        self.optimizer = AdamW(
+            self.model.parameters(), lr=learning_rate, weight_decay=weight_decay
+        )
         self.epochs = epochs
         total_steps = len(self.train_loader) * self.epochs
         num_warmup_steps = round(total_steps * warmup)
@@ -153,6 +156,7 @@ class PairedTrainer(Trainer):
         early_stopping_patience: int,
         loss_margin: float,
         log_interval: int,
+        weight_decay: float,
     ) -> None:
         super().__init__(
             fold,
@@ -170,6 +174,7 @@ class PairedTrainer(Trainer):
             warmup,
             early_stopping_patience,
             log_interval,
+            weight_decay,
         )
         on_fail = "validation dataset lengths don't match!"
         assert len(less_toxic_valid_set) == len(more_toxic_valid_set), on_fail
