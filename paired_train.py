@@ -74,7 +74,8 @@ if __name__ == "__main__":
         )
         trainer = PairedTrainer(
             fold=config.fold,
-            checkpoint=config.checkpoint,
+            model_name=config.checkpoint,
+            model=model,
             epochs=config.epochs,
             learning_rate=config.learning_rate,
             train_set=train_set,
