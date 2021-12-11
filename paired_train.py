@@ -1,6 +1,6 @@
 import argparse
 import pandas as pd
-from transformers import AutoTokenizer
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import os
 
 from utils import set_seed
@@ -68,6 +68,9 @@ if __name__ == "__main__":
         )
         more_toxic_valid_set = ToxicDataset(
             valid_data.more_toxic, tokenizer, config.max_length
+        )
+        model = AutoModelForSequenceClassification.from_pretrained(
+            config.checkpoint, num_labels=1
         )
         trainer = PairedTrainer(
             fold=config.fold,

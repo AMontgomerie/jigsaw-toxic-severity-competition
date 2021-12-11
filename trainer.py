@@ -1,4 +1,5 @@
 import torch
+import torch.nn as nn
 from torch.nn import MarginRankingLoss
 from torch.optim import AdamW
 from torch.utils.data import Dataset, DataLoader
@@ -18,7 +19,8 @@ class Trainer:
     def __init__(
         self,
         fold: int,
-        checkpoint: str,
+        model_name: str,
+        model: nn.Module,
         epochs: int,
         learning_rate: float,
         train_set: Dataset,
@@ -46,9 +48,7 @@ class Trainer:
             pin_memory=True,
             num_workers=dataloader_workers,
         )
-        self.model = AutoModelForSequenceClassification.from_pretrained(
-            checkpoint, num_labels=1
-        )
+        self.model = model
         self.model = self.model.to("cuda")
         self.optimizer = AdamW(self.model.parameters(), lr=learning_rate)
         self.epochs = epochs
@@ -61,7 +61,7 @@ class Trainer:
         self.train_batch_size = train_batch_size
         self.valid_batch_size = valid_batch_size
         self.save_path = os.path.join(
-            save_dir, f"{checkpoint.replace('/', '_')}_{fold}.bin"
+            save_dir, f"{model_name.replace('/', '_')}_{fold}.bin"
         )
         self.best_valid_score = float("inf")
         self.early_stopping_patience = early_stopping_patience
@@ -137,7 +137,8 @@ class PairedTrainer(Trainer):
     def __init__(
         self,
         fold: int,
-        checkpoint: str,
+        model_name: str,
+        model: nn.Module,
         epochs: int,
         learning_rate: float,
         train_set: PairedToxicDataset,
@@ -155,7 +156,8 @@ class PairedTrainer(Trainer):
     ) -> None:
         super().__init__(
             fold,
-            checkpoint,
+            model_name,
+            model,
             epochs,
             learning_rate,
             train_set,
