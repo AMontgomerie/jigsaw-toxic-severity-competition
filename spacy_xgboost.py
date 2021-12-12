@@ -34,12 +34,38 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def get_valid_score(
-    model: BaseEstimator, less_toxic: List[np.ndarray], more_toxic: List[np.ndarray]
+def train_all_folds(data: pd.DataFrame) -> List[XGBRegressor]:
+    models = []
+    for fold in range(5):
+        train = data.loc[data.fold != fold]
+        model = XGBRegressor()
+        model.fit(train.vector.tolist(), train.target)
+        models.append(model)
+        save_model(model, fold, args.save_dir)
+    return models
+
+
+def validate(
+    models: List[XGBRegressor], less_toxic: pd.Series, more_toxic: pd.Series
 ) -> float:
-    less_toxic_preds = model.predict(less_toxic)
-    more_toxic_preds = model.predict(more_toxic)
-    return sum(less_toxic_preds < more_toxic_preds) / len(test_data)
+    fold_less_toxic = []
+    fold_more_toxic = []
+    for model in models:
+        less_toxic_preds = model.predict(less_toxic)
+        more_toxic_preds = model.predict(more_toxic)
+        fold_less_toxic.append(less_toxic_preds)
+        fold_more_toxic.append(more_toxic_preds)
+    mean_less_toxic = np.mean(fold_less_toxic, axis=0)
+    mean_more_toxic = np.mean(fold_more_toxic, axis=0)
+    return sum(mean_less_toxic < mean_more_toxic) / len(less_toxic)
+
+
+def predict(models: List[XGBRegressor], test_data: pd.Series) -> np.ndarray:
+    fold_predictions = []
+    for model in models:
+        predictions = model.predict(test_data)
+        fold_predictions.append(predictions)
+    return np.mean(fold_predictions, axis=0)
 
 
 def save_model(model: BaseEstimator, fold: int, save_dir: str) -> None:
@@ -53,21 +79,14 @@ if __name__ == "__main__":
     valid_data = pd.read_csv(args.valid_path)
     test_data = pd.read_csv(args.test_path)
     encoder = SpacyVectorizer()
-    data["vector"] = encoded_texts = encoder.transform(data.text)
+    data["vector"] = encoder.transform(data.text)
     encoded_less_toxic = encoder.transform(valid_data.less_toxic)
     encoded_more_toxic = encoder.transform(valid_data.more_toxic)
     encoded_test_data = encoder.transform(test_data.text)
-    fold_predictions = []
-    for fold in range(5):
-        train = data.loc[data.fold == fold]
-        model = XGBRegressor()
-        model.fit(train.vector.tolist(), train.target)
-        valid_score = get_valid_score(model, encoded_less_toxic, encoded_more_toxic)
-        print(f"Fold {fold} ranking score: {valid_score}")
-        predictions = model.predict(encoded_test_data)
-        fold_predictions.append(predictions)
-    mean_predictions = np.mean(fold_predictions, axis=0)
+    models = train_all_folds(data)
+    valid_score = validate(models, encoded_less_toxic, encoded_more_toxic)
+    test_predictions = predict(models, encoded_test_data)
     submission = pd.DataFrame(
-        {"comment_id": test_data.comment_id, "score": mean_predictions}
+        {"comment_id": test_data.comment_id, "score": test_predictions}
     )
     submission.to_csv(args.pred_save_path, index=False)
