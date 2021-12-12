@@ -34,14 +34,14 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def train_all_folds(data: pd.DataFrame) -> List[XGBRegressor]:
+def train_all_folds(data: pd.DataFrame, save_dir: str) -> List[XGBRegressor]:
     models = []
     for fold in range(5):
         train = data.loc[data.fold != fold]
         model = XGBRegressor()
         model.fit(train.vector.tolist(), train.target)
         models.append(model)
-        save_model(model, fold, args.save_dir)
+        save_model(model, fold, save_dir)
     return models
 
 
@@ -83,7 +83,7 @@ if __name__ == "__main__":
     encoded_less_toxic = encoder.transform(valid_data.less_toxic)
     encoded_more_toxic = encoder.transform(valid_data.more_toxic)
     encoded_test_data = encoder.transform(test_data.text)
-    models = train_all_folds(data)
+    models = train_all_folds(data, args.model_save_dir)
     valid_score = validate(models, encoded_less_toxic, encoded_more_toxic)
     test_predictions = predict(models, encoded_test_data)
     submission = pd.DataFrame(
