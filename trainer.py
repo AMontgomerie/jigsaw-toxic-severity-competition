@@ -34,6 +34,7 @@ class Trainer:
         early_stopping_patience: int,
         log_interval: int,
         weight_decay: float,
+        accumulation_steps: int,
     ) -> None:
         self.train_loader = DataLoader(
             train_set,
@@ -55,7 +56,8 @@ class Trainer:
             self.model.parameters(), lr=learning_rate, weight_decay=weight_decay
         )
         self.epochs = epochs
-        total_steps = len(self.train_loader) * self.epochs
+        self.accumulation_steps = accumulation_steps
+        total_steps = len(self.train_loader) // self.accumulation_steps * self.epochs
         num_warmup_steps = round(total_steps * warmup)
         self.scheduler = get_scheduler(
             scheduler, self.optimizer, num_warmup_steps, total_steps
@@ -72,6 +74,7 @@ class Trainer:
         self.log_interval = log_interval
 
     def train(self) -> None:
+        global_step = 1
         for epoch in range(1, self.epochs + 1):
             self.model.train()
             self.train_loss.reset()
@@ -83,11 +86,13 @@ class Trainer:
                     output = self.model(**data)
                     loss = output.loss
                     loss.backward()
-                    self.optimizer.step()
-                    self.scheduler.step()
+                    if global_step % self.accumulation_steps == 0:
+                        self.optimizer.step()
+                        self.scheduler.step()
                     self.train_loss.update(loss.item(), self.train_batch_size)
                     tepoch.set_postfix({"train_loss": self.train_loss.avg})
                     tepoch.update(1)
+                    global_step += 1
             valid_score = self.evaluate()
             terminate = self._on_epoch_end(
                 valid_score < self.best_valid_score, valid_score
@@ -158,6 +163,7 @@ class PairedTrainer(Trainer):
         log_interval: int,
         weight_decay: float,
         validation_steps: int,
+        accumulation_steps: int,
     ) -> None:
         super().__init__(
             fold,
@@ -176,6 +182,7 @@ class PairedTrainer(Trainer):
             early_stopping_patience,
             log_interval,
             weight_decay,
+            accumulation_steps,
         )
         on_fail = "validation dataset lengths don't match!"
         assert len(less_toxic_valid_set) == len(more_toxic_valid_set), on_fail
@@ -223,9 +230,10 @@ class PairedTrainer(Trainer):
                             less_toxic_output.logits, more_toxic_output.logits, target
                         )
                         self.scaler.scale(loss).backward()
-                    self.scaler.step(self.optimizer)
-                    self.scaler.update()
-                    self.scheduler.step()
+                    if global_step % self.accumulation_steps == 0:
+                        self.scaler.step(self.optimizer)
+                        self.scaler.update()
+                        self.scheduler.step()
                     self.train_loss.update(loss.item(), self.train_batch_size)
                     self.wandb_train_loss.update(loss.item(), self.train_batch_size)
                     if global_step % self.log_interval == 0:
