@@ -33,6 +33,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--log_interval", type=int, default=100)
     parser.add_argument("--weight_decay", type=float, default=1e-2)
+    parser.add_argument("--validation_steps", type=int, default=None)
     return parser.parse_args()
 
 
@@ -92,6 +93,7 @@ if __name__ == "__main__":
             early_stopping_patience=config.early_stopping_patience,
             log_interval=config.log_interval,
             weight_decay=config.weight_decay,
+            validation_steps=config.validation_steps,
         )
         best_valid_score = trainer.train()
         print(f"Best valid score: {best_valid_score:.3f}")

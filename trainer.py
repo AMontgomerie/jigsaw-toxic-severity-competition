@@ -157,6 +157,7 @@ class PairedTrainer(Trainer):
         loss_margin: float,
         log_interval: int,
         weight_decay: float,
+        validation_steps: int
     ) -> None:
         super().__init__(
             fold,
@@ -196,6 +197,7 @@ class PairedTrainer(Trainer):
         self.best_valid_score = 0
         self.wandb_train_loss = AverageMeter()
         self.scaler = amp.GradScaler()
+        self.validation_steps = validation_steps
 
     def train(self) -> float:
         wandb.watch(self.model, self.loss_fn, log="all", log_freq=self.log_interval)
@@ -232,7 +234,21 @@ class PairedTrainer(Trainer):
                         self.wandb_train_loss.reset()
                     tepoch.set_postfix({"train_loss": self.train_loss.avg})
                     tepoch.update(1)
+
+                    if (
+                        self.validation_steps is not None 
+                        and global_step % self.validation_steps == 0
+                    ):
+                        valid_score = self.evaluate()
+                        wandb.log({"valid_score": valid_score})
+                        terminate = self._on_epoch_end(
+                            valid_score > self.best_valid_score, valid_score
+                        )
+                        if terminate:
+                            return self.best_valid_score
+                        
                     global_step += 1
+
             valid_score = self.evaluate()
             wandb.log({"valid_score": valid_score})
             terminate = self._on_epoch_end(
@@ -240,6 +256,7 @@ class PairedTrainer(Trainer):
             )
             if terminate:
                 return self.best_valid_score
+                
         return self.best_valid_score
 
     def evaluate(self) -> float:
