@@ -75,13 +75,13 @@ class Trainer:
 
     def train(self) -> None:
         global_step = 1
+        self.optimizer.zero_grad(set_to_none=True)
         for epoch in range(1, self.epochs + 1):
             self.model.train()
             self.train_loss.reset()
             with tqdm(total=len(self.train_loader), unit="batches") as tepoch:
                 tepoch.set_description(f"epoch {epoch}")
                 for data in self.train_loader:
-                    self.optimizer.zero_grad()
                     data = self._to_cuda(data)
                     output = self.model(**data)
                     loss = output.loss
@@ -89,6 +89,7 @@ class Trainer:
                     if global_step % self.accumulation_steps == 0:
                         self.optimizer.step()
                         self.scheduler.step()
+                        self.optimizer.zero_grad(set_to_none=True)
                     self.train_loss.update(loss.item(), self.train_batch_size)
                     tepoch.set_postfix({"train_loss": self.train_loss.avg})
                     tepoch.update(1)
@@ -210,6 +211,7 @@ class PairedTrainer(Trainer):
         wandb.watch(self.model, self.loss_fn, log="all", log_freq=self.log_interval)
         wandb.log({"valid_score": 0})
         global_step = 1
+        self.optimizer.zero_grad(set_to_none=True)
         for epoch in range(1, self.epochs + 1):
             self.model.train()
             self.train_loss.reset()
@@ -219,7 +221,6 @@ class PairedTrainer(Trainer):
                 for epoch_step, (less_toxic_data, more_toxic_data, target) in enumerate(
                     self.train_loader
                 ):
-                    self.optimizer.zero_grad()
                     less_toxic_data = self._to_cuda(less_toxic_data)
                     more_toxic_data = self._to_cuda(more_toxic_data)
                     target = target.to("cuda")
@@ -234,6 +235,7 @@ class PairedTrainer(Trainer):
                         self.scaler.step(self.optimizer)
                         self.scaler.update()
                         self.scheduler.step()
+                        self.optimizer.zero_grad(set_to_none=True)
                     self.train_loss.update(loss.item(), self.train_batch_size)
                     self.wandb_train_loss.update(loss.item(), self.train_batch_size)
                     if global_step % self.log_interval == 0:
@@ -250,6 +252,7 @@ class PairedTrainer(Trainer):
                         and epoch_step + 1 % self.validation_steps == 0
                     ):
                         valid_score = self.evaluate(use_tqdm=False)
+                        self.model.train()
                         wandb.log({"valid_score": valid_score})
                         terminate = self._on_epoch_end(
                             valid_score > self.best_valid_score, valid_score
