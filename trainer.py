@@ -239,8 +239,7 @@ class PairedTrainer(Trainer):
 
                     if (
                         self.validation_steps is not None
-                        and epoch_step != 0
-                        and epoch_step % self.validation_steps == 0
+                        and epoch_step + 1 % self.validation_steps == 0
                     ):
                         valid_score = self.evaluate(use_tqdm=False)
                         wandb.log({"valid_score": valid_score})
