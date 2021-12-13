@@ -242,7 +242,7 @@ class PairedTrainer(Trainer):
                         and epoch_step != 0
                         and epoch_step % self.validation_steps == 0
                     ):
-                        valid_score = self.evaluate()
+                        valid_score = self.evaluate(use_tqdm=False)
                         wandb.log({"valid_score": valid_score})
                         terminate = self._on_epoch_end(
                             valid_score > self.best_valid_score, valid_score
@@ -263,17 +263,21 @@ class PairedTrainer(Trainer):
 
         return self.best_valid_score
 
-    def evaluate(self) -> float:
-        less_toxic_preds = self._predict(
-            self.less_toxic_valid_loader, f"valid (less toxic)"
-        )
-        more_toxic_preds = self._predict(
-            self.more_toxic_valid_loader, f"valid (more toxic)"
-        )
+    def evaluate(self, use_tqdm: bool = True) -> float:
+        if use_tqdm:
+            less_toxic_preds = self._predict_tqdm(
+                self.less_toxic_valid_loader, f"valid (less toxic)"
+            )
+            more_toxic_preds = self._predict_tqdm(
+                self.more_toxic_valid_loader, f"valid (more toxic)"
+            )
+        else:
+            less_toxic_preds = self._predict(self.less_toxic_valid_loader)
+            more_toxic_preds = self._predict(self.more_toxic_valid_loader)
         return sum(less_toxic_preds < more_toxic_preds) / len(less_toxic_preds)
 
     @torch.no_grad()
-    def _predict(
+    def _predict_tqdm(
         self,
         dataloader: DataLoader,
         name: str,
@@ -287,4 +291,14 @@ class PairedTrainer(Trainer):
                 output = self.model(**data)
                 predictions += list(output.logits.squeeze().cpu().numpy())
                 tepoch.update(1)
+        return np.array(predictions)
+
+    @torch.no_grad()
+    def _predict(self, dataloader: DataLoader) -> List[float]:
+        self.model.eval()
+        predictions = []
+        for data in dataloader:
+            data = self._to_cuda(data)
+            output = self.model(**data)
+            predictions += list(output.logits.squeeze().cpu().numpy())
         return np.array(predictions)
