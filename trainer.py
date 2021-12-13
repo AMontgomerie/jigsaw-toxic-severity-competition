@@ -157,7 +157,7 @@ class PairedTrainer(Trainer):
         loss_margin: float,
         log_interval: int,
         weight_decay: float,
-        validation_steps: int
+        validation_steps: int,
     ) -> None:
         super().__init__(
             fold,
@@ -236,7 +236,7 @@ class PairedTrainer(Trainer):
                     tepoch.update(1)
 
                     if (
-                        self.validation_steps is not None 
+                        self.validation_steps is not None
                         and global_step % self.validation_steps == 0
                     ):
                         valid_score = self.evaluate()
@@ -246,17 +246,18 @@ class PairedTrainer(Trainer):
                         )
                         if terminate:
                             return self.best_valid_score
-                        
+
                     global_step += 1
 
-            valid_score = self.evaluate()
-            wandb.log({"valid_score": valid_score})
-            terminate = self._on_epoch_end(
-                valid_score > self.best_valid_score, valid_score
-            )
-            if terminate:
-                return self.best_valid_score
-                
+            if self.validation_steps is None:
+                valid_score = self.evaluate()
+                wandb.log({"valid_score": valid_score})
+                terminate = self._on_epoch_end(
+                    valid_score > self.best_valid_score, valid_score
+                )
+                if terminate:
+                    return self.best_valid_score
+
         return self.best_valid_score
 
     def evaluate(self) -> float:
