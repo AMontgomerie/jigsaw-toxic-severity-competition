@@ -85,6 +85,7 @@ class Trainer:
                     data = self._to_cuda(data)
                     output = self.model(**data)
                     loss = output.loss
+                    loss = loss / self.accumulation_steps
                     loss.backward()
                     if global_step % self.accumulation_steps == 0:
                         self.optimizer.step()
@@ -230,6 +231,7 @@ class PairedTrainer(Trainer):
                         loss = self.loss_fn(
                             less_toxic_output.logits, more_toxic_output.logits, target
                         )
+                        loss = loss / self.accumulation_steps
                         self.scaler.scale(loss).backward()
                     if global_step % self.accumulation_steps == 0:
                         self.scaler.step(self.optimizer)
