@@ -209,7 +209,9 @@ class PairedTrainer(Trainer):
             self.wandb_train_loss.reset()
             with tqdm(total=len(self.train_loader), unit="batches") as tepoch:
                 tepoch.set_description(f"epoch {epoch}")
-                for less_toxic_data, more_toxic_data, target in self.train_loader:
+                for epoch_step, (less_toxic_data, more_toxic_data, target) in enumerate(
+                    self.train_loader
+                ):
                     self.optimizer.zero_grad()
                     less_toxic_data = self._to_cuda(less_toxic_data)
                     more_toxic_data = self._to_cuda(more_toxic_data)
@@ -237,7 +239,8 @@ class PairedTrainer(Trainer):
 
                     if (
                         self.validation_steps is not None
-                        and global_step % self.validation_steps == 0
+                        and epoch_step != 0
+                        and epoch_step % self.validation_steps == 0
                     ):
                         valid_score = self.evaluate()
                         wandb.log({"valid_score": valid_score})
