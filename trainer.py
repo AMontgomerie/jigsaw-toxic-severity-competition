@@ -223,7 +223,6 @@ class PairedTrainer(Trainer):
                 for epoch_step, (less_toxic_data, more_toxic_data, target) in enumerate(
                     self.train_loader
                 ):
-                    print(epoch_step)
                     less_toxic_data = self._to_cuda(less_toxic_data)
                     more_toxic_data = self._to_cuda(more_toxic_data)
                     target = target.to("cuda")
@@ -253,7 +252,7 @@ class PairedTrainer(Trainer):
 
                     if (
                         self.validation_steps is not None
-                        and epoch_step + 1 % self.validation_steps == 0
+                        and (epoch_step + 1) % self.validation_steps == 0
                     ):
                         valid_score = self.evaluate(use_tqdm=False)
                         self.model.train()
