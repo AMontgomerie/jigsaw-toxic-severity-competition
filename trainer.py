@@ -57,7 +57,7 @@ class Trainer:
         )
         self.epochs = epochs
         self.accumulation_steps = accumulation_steps
-        total_steps = len(self.train_loader) // self.accumulation_steps * self.epochs
+        total_steps = (len(self.train_loader) // self.accumulation_steps) * self.epochs
         num_warmup_steps = round(total_steps * warmup)
         self.scheduler = get_scheduler(
             scheduler, self.optimizer, num_warmup_steps, total_steps
