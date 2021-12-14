@@ -213,6 +213,7 @@ class PairedTrainer(Trainer):
         wandb.log({"valid_score": 0})
         global_step = 1
         self.optimizer.zero_grad(set_to_none=True)
+        print("validation steps", self.validation_steps)
         for epoch in range(1, self.epochs + 1):
             self.model.train()
             self.train_loss.reset()
@@ -222,6 +223,7 @@ class PairedTrainer(Trainer):
                 for epoch_step, (less_toxic_data, more_toxic_data, target) in enumerate(
                     self.train_loader
                 ):
+                    print(epoch_step)
                     less_toxic_data = self._to_cuda(less_toxic_data)
                     more_toxic_data = self._to_cuda(more_toxic_data)
                     target = target.to("cuda")
