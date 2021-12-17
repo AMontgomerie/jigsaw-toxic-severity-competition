@@ -1,6 +1,6 @@
 import argparse
 import pandas as pd
-from transformers import AutoTokenizer
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
 from utils import set_seed
 from dataset import ToxicDataset
@@ -22,6 +22,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--scheduler", type=str, default="constant")
     parser.add_argument("--warmup", type=float, default=0)
     parser.add_argument("--max_length", type=int, default=512)
+    parser.add_argument("--log_interval", type=int, default=100)
+    parser.add_argument("--weight_decay", type=float, default=1e-2)
+    parser.add_argument("--accumulation_steps", type=int, default=1)
     return parser.parse_args()
 
 
@@ -32,6 +35,9 @@ if __name__ == "__main__":
     train_data = data.loc[data.fold != args.fold].reset_index(drop=True)
     valid_data = data.loc[data.fold == args.fold].reset_index(drop=True)
     tokenizer = AutoTokenizer.from_pretrained(args.checkpoint)
+    model = AutoModelForSequenceClassification.from_pretrained(
+        args.checkpoint, num_labels=1
+    )
     train_set = ToxicDataset(
         train_data.text, tokenizer, args.max_length, train_data.target
     )
@@ -40,7 +46,8 @@ if __name__ == "__main__":
     )
     trainer = Trainer(
         fold=args.fold,
-        checkpoint=args.checkpoint,
+        model=model,
+        model_name=args.checkpoint,
         epochs=args.epochs,
         learning_rate=args.learning_rate,
         train_set=train_set,
@@ -51,5 +58,9 @@ if __name__ == "__main__":
         save_dir=args.save_dir,
         scheduler=args.scheduler,
         warmup=args.warmup,
+        early_stopping_patience=0,
+        log_interval=args.log_interval,
+        weight_decay=args.weight_decay,
+        accumulation_steps=args.accumulation_steps,
     )
     trainer.train()
