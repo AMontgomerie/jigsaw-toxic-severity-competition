@@ -86,7 +86,7 @@ class Trainer:
         self.validation_steps = validation_steps
 
     def train(self) -> float:
-        wandb.watch(self.model, self.loss_fn, log="all", log_freq=self.log_interval)
+        wandb.watch(self.model, log="all", log_freq=self.log_interval)
         wandb.log({"valid_score": 0})
         global_step = 1
         self.optimizer.zero_grad(set_to_none=True)
@@ -97,7 +97,7 @@ class Trainer:
             with tqdm(total=len(self.train_loader), unit="batches") as tepoch:
                 tepoch.set_description(f"epoch {epoch}")
                 for epoch_step, data in enumerate(self.train_loader):
-                    loss = self._model_fn(*data)
+                    loss = self._model_fn(data)
                     self.scaler.scale(loss).backward()
                     if global_step % self.accumulation_steps == 0:
                         self.scaler.step(self.optimizer)
