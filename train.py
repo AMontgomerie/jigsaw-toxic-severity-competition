@@ -31,8 +31,7 @@ def parse_args() -> argparse.Namespace:
 if __name__ == "__main__":
     args = parse_args()
     set_seed(args.seed)
-    data = pd.read_csv(args.train_path)
-    train_data = data.loc[data.fold != args.fold].reset_index(drop=True)
+    train_data = pd.read_csv(args.train_path)
     valid_data = pd.read_csv(args.valid_path)
     tokenizer = AutoTokenizer.from_pretrained(args.checkpoint)
     model = AutoModelForSequenceClassification.from_pretrained(

@@ -13,6 +13,7 @@ from dataset import ToxicDataset
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
+    parser.add_argument("--num_folds", type=int, default=5)
     parser.add_argument("--save_path", type=str, default="./submission.csv")
     parser.add_argument("--base_model", type=str, default="roberta-base")
     parser.add_argument("--base_model_name", type=str, default="roberta-base")
@@ -61,7 +62,7 @@ if __name__ == "__main__":
     data = pd.read_csv(args.data_path)
     dataset = ToxicDataset(data.text, tokenizer, args.max_length)
     scores = []
-    for fold in range(5):
+    for fold in range(args.num_folds):
         weights_path = os.path.join(
             args.weights_dir, f"{args.base_model_name.replace('/', '_')}_{fold}.bin"
         )
