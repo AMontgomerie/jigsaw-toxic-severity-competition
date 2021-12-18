@@ -18,7 +18,6 @@ from dataset import ToxicDataset, PairedToxicDataset
 class Trainer:
     def __init__(
         self,
-        fold: int,
         model_name: str,
         model: nn.Module,
         epochs: int,
@@ -73,9 +72,7 @@ class Trainer:
         self.train_loss = AverageMeter()
         self.train_batch_size = train_batch_size
         self.valid_batch_size = valid_batch_size
-        self.save_path = os.path.join(
-            save_dir, f"{model_name.replace('/', '_')}_{fold}.bin"
-        )
+        self.save_path = os.path.join(save_dir, f"{model_name.replace('/', '_')}.bin")
         self.early_stopping_patience = early_stopping_patience
         self.early_stopping_counter = 0
         self.log_interval = log_interval
@@ -202,7 +199,6 @@ class PairedTrainer(Trainer):
         accumulation_steps: int,
     ) -> None:
         super().__init__(
-            fold,
             model_name,
             model,
             epochs,
@@ -220,6 +216,9 @@ class PairedTrainer(Trainer):
             log_interval,
             weight_decay,
             accumulation_steps,
+        )
+        self.save_path = os.path.join(
+            save_dir, f"{model_name.replace('/', '_')}_{fold}.bin"
         )
         self.loss_fn = MarginRankingLoss(loss_margin)
         self.wandb_train_loss = AverageMeter()

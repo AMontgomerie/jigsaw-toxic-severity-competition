@@ -9,7 +9,6 @@ from trainer import Trainer
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--fold", type=int, default=0)
     parser.add_argument("--train_path", type=str, default="data/train.csv")
     parser.add_argument("--valid_path", type=str, default="data/paired_data.csv")
     parser.add_argument("--save_dir", type=str, default=".")
@@ -49,7 +48,6 @@ if __name__ == "__main__":
         valid_data.more_toxic, tokenizer, args.max_length
     )
     trainer = Trainer(
-        fold=args.fold,
         model=model,
         model_name=args.checkpoint,
         epochs=args.epochs,
