@@ -54,6 +54,7 @@ def parse_training_args() -> argparse.Namespace:
     parser.add_argument("--use_extra_data", dest="use_extra_data", action="store_true")
     parser.add_argument("--valid_batch_size", type=int, default=128)
     parser.add_argument("--validation_steps", type=int, default=None)
+    parser.add_argument("--valid_path", type=str, default="data/paired_data.csv")
     parser.add_argument("--warmup", type=float, default=0)
     parser.add_argument("--weight_decay", type=float, default=1e-2)
     return parser.parse_args()
