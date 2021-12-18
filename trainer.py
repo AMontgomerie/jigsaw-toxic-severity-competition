@@ -22,6 +22,7 @@ class Trainer:
         dataloader_workers: int,
         early_stopping_patience: int,
         epochs: int,
+        fold: int,
         learning_rate: float,
         less_toxic_valid_set: ToxicDataset,
         log_interval: int,
@@ -73,7 +74,9 @@ class Trainer:
         self.train_loss = AverageMeter()
         self.train_batch_size = train_batch_size
         self.valid_batch_size = valid_batch_size
-        self.save_path = os.path.join(save_dir, f"{model_name.replace('/', '_')}_0.bin")
+        self.save_path = os.path.join(
+            save_dir, f"{model_name.replace('/', '_')}_{fold}.bin"
+        )
         self.early_stopping_patience = early_stopping_patience
         self.early_stopping_counter = 0
         self.log_interval = log_interval
@@ -241,6 +244,7 @@ class PairedTrainer(Trainer):
             dataloader_workers,
             early_stopping_patience,
             epochs,
+            fold,
             learning_rate,
             less_toxic_valid_set,
             log_interval,
@@ -255,9 +259,6 @@ class PairedTrainer(Trainer):
             validation_steps,
             warmup,
             weight_decay,
-        )
-        self.save_path = os.path.join(
-            save_dir, f"{model_name.replace('/', '_')}_{fold}.bin"
         )
         self.loss_fn = MarginRankingLoss(loss_margin)
 

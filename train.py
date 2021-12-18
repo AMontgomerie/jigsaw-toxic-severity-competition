@@ -1,68 +1,65 @@
-import argparse
 import pandas as pd
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
+import os
+import wandb
 
-from utils import set_seed
+from utils import set_seed, parse_training_args
 from dataset import ToxicDataset
 from trainer import Trainer
 
-
-def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--train_path", type=str, default="data/train.csv")
-    parser.add_argument("--valid_path", type=str, default="data/paired_data.csv")
-    parser.add_argument("--save_dir", type=str, default=".")
-    parser.add_argument("--epochs", type=int, default=1)
-    parser.add_argument("--train_batch_size", type=int, default=16)
-    parser.add_argument("--valid_batch_size", type=int, default=128)
-    parser.add_argument("--learning_rate", type=float, default=1e-5)
-    parser.add_argument("--dataloader_workers", type=int, default=2)
-    parser.add_argument("--checkpoint", type=str, default="roberta-base")
-    parser.add_argument("--seed", type=int, default=666)
-    parser.add_argument("--scheduler", type=str, default="constant")
-    parser.add_argument("--warmup", type=float, default=0)
-    parser.add_argument("--max_length", type=int, default=512)
-    parser.add_argument("--log_interval", type=int, default=100)
-    parser.add_argument("--weight_decay", type=float, default=1e-2)
-    parser.add_argument("--accumulation_steps", type=int, default=1)
-    return parser.parse_args()
-
-
 if __name__ == "__main__":
-    args = parse_args()
-    set_seed(args.seed)
-    train_data = pd.read_csv(args.train_path)
-    valid_data = pd.read_csv(args.valid_path)
-    tokenizer = AutoTokenizer.from_pretrained(args.checkpoint)
-    model = AutoModelForSequenceClassification.from_pretrained(
-        args.checkpoint, num_labels=1
-    )
-    train_set = ToxicDataset(
-        train_data.text, tokenizer, args.max_length, train_data.target
-    )
-    less_toxic_valid_set = ToxicDataset(
-        valid_data.less_toxic, tokenizer, args.max_length
-    )
-    more_toxic_valid_set = ToxicDataset(
-        valid_data.more_toxic, tokenizer, args.max_length
-    )
-    trainer = Trainer(
-        model=model,
-        model_name=args.checkpoint,
-        epochs=args.epochs,
-        learning_rate=args.learning_rate,
-        train_set=train_set,
-        less_toxic_valid_set=less_toxic_valid_set,
-        more_toxic_valid_set=more_toxic_valid_set,
-        train_batch_size=args.train_batch_size,
-        valid_batch_size=args.valid_batch_size,
-        dataloader_workers=args.dataloader_workers,
-        save_dir=args.save_dir,
-        scheduler=args.scheduler,
-        warmup=args.warmup,
-        early_stopping_patience=0,
-        log_interval=args.log_interval,
-        weight_decay=args.weight_decay,
-        accumulation_steps=args.accumulation_steps,
-    )
-    trainer.train()
+    args = parse_training_args()
+    config = vars(args)
+    if config["use_extra_data"]:
+        extra_files = [
+            os.path.join(config["extra_data_dir"], f)
+            for f in os.listdir(config["extra_data_dir"])
+        ]
+        config["extra_files"] = extra_files
+    wandb.login()
+    with wandb.init(
+        project="jigsaw-train",
+        group=str(args.group_id),
+        name=f"{args.group_id}-{args.checkpoint}",
+        config=config,
+    ):
+        config = wandb.config
+        set_seed(config.seed)
+        train_data = pd.read_csv(config.train_path)
+        valid_data = pd.read_csv(config.valid_path)
+        tokenizer = AutoTokenizer.from_pretrained(config.checkpoint)
+        model = AutoModelForSequenceClassification.from_pretrained(
+            config.checkpoint, num_labels=1
+        )
+        train_set = ToxicDataset(
+            train_data.text, tokenizer, config.max_length, train_data.target
+        )
+        less_toxic_valid_set = ToxicDataset(
+            valid_data.less_toxic, tokenizer, config.max_length
+        )
+        more_toxic_valid_set = ToxicDataset(
+            valid_data.more_toxic, tokenizer, config.max_length
+        )
+        trainer = Trainer(
+            accumulation_steps=config.accumulation_steps,
+            dataloader_workers=config.dataloader_workers,
+            early_stopping_patience=config.early_stopping_patience,
+            epochs=config.epochs,
+            fold=config.fold,
+            learning_rate=config.learning_rate,
+            less_toxic_valid_set=less_toxic_valid_set,
+            log_interval=config.log_interval,
+            loss_margin=config.loss_margin,
+            model=model,
+            model_name=config.checkpoint,
+            more_toxic_valid_set=more_toxic_valid_set,
+            save_dir=config.save_dir,
+            scheduler=config.scheduler,
+            train_batch_size=config.train_batch_size,
+            train_set=train_set,
+            valid_batch_size=config.valid_batch_size,
+            validation_steps=config.validation_steps,
+            warmup=config.warmup,
+            weight_decay=config.weight_decay,
+        )
+        trainer.train()
