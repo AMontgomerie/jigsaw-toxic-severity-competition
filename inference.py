@@ -13,7 +13,7 @@ from dataset import ToxicDataset
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--save_path", type=str, required="./submission.csv")
+    parser.add_argument("--save_path", type=str, default="./submission.csv")
     parser.add_argument("--base_model", type=str, default="roberta-base")
     parser.add_argument("--base_model_name", type=str, default="roberta-base")
     parser.add_argument("--weights_dir", type=str, default=".")
