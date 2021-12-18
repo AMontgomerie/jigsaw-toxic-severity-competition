@@ -80,6 +80,7 @@ class Trainer:
         self.early_stopping_counter = 0
         self.log_interval = log_interval
         self.best_valid_score = 0
+        self.scaler = amp.GradScaler()
 
     def train(self) -> None:
         global_step = 1
@@ -91,12 +92,13 @@ class Trainer:
                 tepoch.set_description(f"epoch {epoch}")
                 for data in self.train_loader:
                     data = self._to_cuda(data)
-                    output = self.model(**data)
-                    loss = output.loss
-                    loss = loss / self.accumulation_steps
-                    loss.backward()
+                    with amp.autocast():
+                        output = self.model(**data)
+                        loss = output.loss
+                        loss = loss / self.accumulation_steps
+                    self.scaler.scale(loss).backward()
                     if global_step % self.accumulation_steps == 0:
-                        self.optimizer.step()
+                        self.scaler.step(self.optimizer)
                         self.scheduler.step()
                         self.optimizer.zero_grad(set_to_none=True)
                     self.train_loss.update(loss.item(), self.train_batch_size)
@@ -247,7 +249,7 @@ class PairedTrainer(Trainer):
                             less_toxic_output.logits, more_toxic_output.logits, target
                         )
                         loss = loss / self.accumulation_steps
-                        self.scaler.scale(loss).backward()
+                    self.scaler.scale(loss).backward()
                     if global_step % self.accumulation_steps == 0:
                         self.scaler.step(self.optimizer)
                         self.scaler.update()
