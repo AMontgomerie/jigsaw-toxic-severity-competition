@@ -29,7 +29,7 @@ class Trainer:
         model: nn.Module,
         more_toxic_valid_set: ToxicDataset,
         train_batch_size: int,
-        train_set: PairedToxicDataset,
+        train_set: ToxicDataset,
         save_dir: str,
         scheduler: str,
         valid_batch_size: int,
