@@ -72,7 +72,9 @@ class Trainer:
         self.train_loss = AverageMeter()
         self.train_batch_size = train_batch_size
         self.valid_batch_size = valid_batch_size
-        self.save_path = os.path.join(save_dir, f"{model_name.replace('/', '_')}.bin")
+        self.save_path = os.path.join(
+            save_dir, f"{model_name.replace('/', '_')}_fold_0.bin"
+        )
         self.early_stopping_patience = early_stopping_patience
         self.early_stopping_counter = 0
         self.log_interval = log_interval
