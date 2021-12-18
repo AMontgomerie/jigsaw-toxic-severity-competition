@@ -99,6 +99,7 @@ class Trainer:
                     self.scaler.scale(loss).backward()
                     if global_step % self.accumulation_steps == 0:
                         self.scaler.step(self.optimizer)
+                        self.scaler.update()
                         self.scheduler.step()
                         self.optimizer.zero_grad(set_to_none=True)
                     self.train_loss.update(loss.item(), self.train_batch_size)
@@ -222,7 +223,6 @@ class PairedTrainer(Trainer):
         )
         self.loss_fn = MarginRankingLoss(loss_margin)
         self.wandb_train_loss = AverageMeter()
-        self.scaler = amp.GradScaler()
         self.validation_steps = validation_steps
 
     def train(self) -> float:
