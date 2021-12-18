@@ -8,7 +8,7 @@ from transformers import get_scheduler
 from tqdm import tqdm
 import os
 import numpy as np
-from typing import Mapping, List
+from typing import Mapping, List, Tuple, Union
 import wandb
 
 from utils import AverageMeter
@@ -34,6 +34,7 @@ class Trainer:
         early_stopping_patience: int,
         log_interval: int,
         weight_decay: float,
+        validation_steps: int,
         accumulation_steps: int,
     ) -> None:
         self.train_loader = DataLoader(
@@ -72,29 +73,28 @@ class Trainer:
         self.train_loss = AverageMeter()
         self.train_batch_size = train_batch_size
         self.valid_batch_size = valid_batch_size
-        self.save_path = os.path.join(
-            save_dir, f"{model_name.replace('/', '_')}_fold_0.bin"
-        )
+        self.save_path = os.path.join(save_dir, f"{model_name.replace('/', '_')}_0.bin")
         self.early_stopping_patience = early_stopping_patience
         self.early_stopping_counter = 0
         self.log_interval = log_interval
         self.best_valid_score = 0
         self.scaler = amp.GradScaler()
+        self.wandb_train_loss = AverageMeter()
+        self.validation_steps = validation_steps
 
-    def train(self) -> None:
+    def train(self) -> float:
+        wandb.watch(self.model, self.loss_fn, log="all", log_freq=self.log_interval)
+        wandb.log({"valid_score": 0})
         global_step = 1
         self.optimizer.zero_grad(set_to_none=True)
         for epoch in range(1, self.epochs + 1):
             self.model.train()
             self.train_loss.reset()
+            self.wandb_train_loss.reset()
             with tqdm(total=len(self.train_loader), unit="batches") as tepoch:
                 tepoch.set_description(f"epoch {epoch}")
-                for data in self.train_loader:
-                    data = self._to_cuda(data)
-                    with amp.autocast():
-                        output = self.model(**data)
-                        loss = output.loss
-                        loss = loss / self.accumulation_steps
+                for epoch_step, data in enumerate(self.train_loader):
+                    loss = self._model_fn(*data)
                     self.scaler.scale(loss).backward()
                     if global_step % self.accumulation_steps == 0:
                         self.scaler.step(self.optimizer)
@@ -102,13 +102,49 @@ class Trainer:
                         self.scheduler.step()
                         self.optimizer.zero_grad(set_to_none=True)
                     self.train_loss.update(loss.item(), self.train_batch_size)
+                    self.wandb_train_loss.update(loss.item(), self.train_batch_size)
+                    if global_step % self.log_interval == 0:
+                        wandb.log(
+                            {"epoch": epoch, "train_loss": self.wandb_train_loss.avg},
+                            step=global_step,
+                        )
+                        self.wandb_train_loss.reset()
                     tepoch.set_postfix({"train_loss": self.train_loss.avg})
                     tepoch.update(1)
+
+                    if (
+                        self.validation_steps is not None
+                        and (epoch_step + 1) % self.validation_steps == 0
+                    ):
+                        valid_score = self.evaluate(use_tqdm=False)
+                        self.model.train()
+                        wandb.log({"valid_score": valid_score})
+                        terminate = self._on_eval(
+                            valid_score > self.best_valid_score, valid_score
+                        )
+                        if terminate:
+                            return self.best_valid_score
+
                     global_step += 1
-            valid_score = self.evaluate()
-            terminate = self._on_eval(valid_score > self.best_valid_score, valid_score)
-            if terminate:
-                return
+
+            if self.validation_steps is None:
+                valid_score = self.evaluate()
+                wandb.log({"valid_score": valid_score})
+                terminate = self._on_eval(
+                    valid_score > self.best_valid_score, valid_score
+                )
+                if terminate:
+                    return self.best_valid_score
+
+        return self.best_valid_score
+
+    def _model_fn(self, data: Mapping[str, torch.Tensor]) -> torch.Tensor:
+        data = self._to_cuda(data)
+        with amp.autocast():
+            output = self.model(**data)
+            loss = output.loss
+            loss = loss / self.accumulation_steps
+        return loss
 
     def _on_eval(self, score_improved: bool, valid_score: float) -> None:
         if score_improved:
@@ -217,78 +253,26 @@ class PairedTrainer(Trainer):
             early_stopping_patience,
             log_interval,
             weight_decay,
+            validation_steps,
             accumulation_steps,
         )
         self.save_path = os.path.join(
             save_dir, f"{model_name.replace('/', '_')}_{fold}.bin"
         )
         self.loss_fn = MarginRankingLoss(loss_margin)
-        self.wandb_train_loss = AverageMeter()
-        self.validation_steps = validation_steps
 
-    def train(self) -> float:
-        wandb.watch(self.model, self.loss_fn, log="all", log_freq=self.log_interval)
-        wandb.log({"valid_score": 0})
-        global_step = 1
-        self.optimizer.zero_grad(set_to_none=True)
-        for epoch in range(1, self.epochs + 1):
-            self.model.train()
-            self.train_loss.reset()
-            self.wandb_train_loss.reset()
-            with tqdm(total=len(self.train_loader), unit="batches") as tepoch:
-                tepoch.set_description(f"epoch {epoch}")
-                for epoch_step, (less_toxic_data, more_toxic_data, target) in enumerate(
-                    self.train_loader
-                ):
-                    less_toxic_data = self._to_cuda(less_toxic_data)
-                    more_toxic_data = self._to_cuda(more_toxic_data)
-                    target = target.to("cuda")
-                    with amp.autocast():
-                        less_toxic_output = self.model(**less_toxic_data)
-                        more_toxic_output = self.model(**more_toxic_data)
-                        loss = self.loss_fn(
-                            less_toxic_output.logits, more_toxic_output.logits, target
-                        )
-                        loss = loss / self.accumulation_steps
-                    self.scaler.scale(loss).backward()
-                    if global_step % self.accumulation_steps == 0:
-                        self.scaler.step(self.optimizer)
-                        self.scaler.update()
-                        self.scheduler.step()
-                        self.optimizer.zero_grad(set_to_none=True)
-                    self.train_loss.update(loss.item(), self.train_batch_size)
-                    self.wandb_train_loss.update(loss.item(), self.train_batch_size)
-                    if global_step % self.log_interval == 0:
-                        wandb.log(
-                            {"epoch": epoch, "train_loss": self.wandb_train_loss.avg},
-                            step=global_step,
-                        )
-                        self.wandb_train_loss.reset()
-                    tepoch.set_postfix({"train_loss": self.train_loss.avg})
-                    tepoch.update(1)
-
-                    if (
-                        self.validation_steps is not None
-                        and (epoch_step + 1) % self.validation_steps == 0
-                    ):
-                        valid_score = self.evaluate(use_tqdm=False)
-                        self.model.train()
-                        wandb.log({"valid_score": valid_score})
-                        terminate = self._on_eval(
-                            valid_score > self.best_valid_score, valid_score
-                        )
-                        if terminate:
-                            return self.best_valid_score
-
-                    global_step += 1
-
-            if self.validation_steps is None:
-                valid_score = self.evaluate()
-                wandb.log({"valid_score": valid_score})
-                terminate = self._on_eval(
-                    valid_score > self.best_valid_score, valid_score
-                )
-                if terminate:
-                    return self.best_valid_score
-
-        return self.best_valid_score
+    def _model_fn(
+        self, data: Tuple[Union[Mapping[str, torch.Tensor], torch.Tensor]]
+    ) -> torch.Tensor:
+        (less_toxic_data, more_toxic_data, target) = data
+        less_toxic_data = self._to_cuda(less_toxic_data)
+        more_toxic_data = self._to_cuda(more_toxic_data)
+        target = target.to("cuda")
+        with amp.autocast():
+            less_toxic_output = self.model(**less_toxic_data)
+            more_toxic_output = self.model(**more_toxic_data)
+            loss = self.loss_fn(
+                less_toxic_output.logits, more_toxic_output.logits, target
+            )
+            loss = loss / self.accumulation_steps
+        return loss
