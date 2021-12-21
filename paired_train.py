@@ -18,7 +18,7 @@ if __name__ == "__main__":
         ]
         config["extra_files"] = extra_files
     wandb.login()
-    fold = args.fold if args.fold else 0
+    fold = args.fold if args.fold is not None else 0
     with wandb.init(
         project="jigsaw-paired-train",
         group=str(args.group_id),
@@ -28,9 +28,9 @@ if __name__ == "__main__":
         config = wandb.config
         set_seed(config.seed)
         data = pd.read_csv(config.train_path)
-        if args.fold:
-            train_data = data.loc[data.fold != config.fold].reset_index(drop=True)
-            valid_data = data.loc[data.fold == config.fold].reset_index(drop=True)
+        if args.fold is not None:
+            train_data = data.loc[data.fold != fold].reset_index(drop=True)
+            valid_data = data.loc[data.fold == fold].reset_index(drop=True)
         else:
             train_data = pd.read_csv(config.train_path)
             valid_data = pd.read_csv(config.valid_path)
@@ -55,7 +55,7 @@ if __name__ == "__main__":
             dataloader_workers=config.dataloader_workers,
             early_stopping_patience=config.early_stopping_patience,
             epochs=config.epochs,
-            fold=config.fold if config.fold else 0,
+            fold=fold,
             learning_rate=config.learning_rate,
             less_toxic_valid_set=less_toxic_valid_set,
             log_interval=config.log_interval,
