@@ -18,16 +18,17 @@ if __name__ == "__main__":
         ]
         config["extra_files"] = extra_files
     wandb.login()
+    fold = args.fold if args.fold else 0
     with wandb.init(
         project="jigsaw-paired-train",
         group=str(args.group_id),
-        name=f"{args.group_id}-{args.checkpoint}-fold-{args.fold}",
+        name=f"{args.group_id}-{args.checkpoint}-fold-{fold}",
         config=config,
     ):
         config = wandb.config
         set_seed(config.seed)
         data = pd.read_csv(config.train_path)
-        if config.fold:
+        if args.fold:
             train_data = data.loc[data.fold != config.fold].reset_index(drop=True)
             valid_data = data.loc[data.fold == config.fold].reset_index(drop=True)
         else:
