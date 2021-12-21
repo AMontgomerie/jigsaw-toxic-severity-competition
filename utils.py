@@ -40,7 +40,7 @@ def parse_training_args() -> argparse.Namespace:
         "--extra_data_dir", type=str, default="data/extra_training_data"
     )
     parser.add_argument("--epochs", type=int, default=1)
-    parser.add_argument("--fold", type=int, default=0)
+    parser.add_argument("--fold", type=int, default=None)
     parser.add_argument("--group_id", type=int, required=True)
     parser.add_argument("--learning_rate", type=float, default=1e-5)
     parser.add_argument("--log_interval", type=int, default=100)

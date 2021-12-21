@@ -45,7 +45,7 @@ if __name__ == "__main__":
             dataloader_workers=config.dataloader_workers,
             early_stopping_patience=config.early_stopping_patience,
             epochs=config.epochs,
-            fold=config.fold,
+            fold=config.fold if config.fold else 0,
             learning_rate=config.learning_rate,
             less_toxic_valid_set=less_toxic_valid_set,
             log_interval=config.log_interval,
