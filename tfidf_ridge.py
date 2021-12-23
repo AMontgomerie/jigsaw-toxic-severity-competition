@@ -5,6 +5,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import Ridge
 from sklearn.metrics import mean_squared_error
 from sklearn.pipeline import Pipeline
+from sklearn.model_selection import StratifiedKFold
 from typing import List
 import joblib
 import os
@@ -23,6 +24,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--max_df", type=float, default=0.8),
     parser.add_argument("--ngram_min", type=int, default=1),
     parser.add_argument("--ngram_max", type=int, default=2)
+    parser.add_argument("--seed", type=int, default=666)
     return parser.parse_args()
 
 
@@ -70,6 +72,14 @@ def train(
     return best_model, min_mse
 
 
+def make_folds(data: pd.DataFrame, seed: int) -> pd.DataFrame:
+    skf = StratifiedKFold(shuffle=True, random_state=seed)
+    data["fold"] = -1
+    for fold, _, valid_index in enumerate(skf.split(data.text, data.target)):
+        data.loc[valid_index] = fold
+    return data
+
+
 def test(models: List[Pipeline], test_data: pd.DataFrame) -> float:
     less_toxic_scores = []
     more_toxic_scores = []
@@ -102,6 +112,8 @@ if __name__ == "__main__":
     test_data = pd.read_csv(args.test_path)
     models = []
     mse_scores = []
+    if "fold" not in data.columns:
+        data = make_folds(data, args.seed)
     for fold in range(5):
         train_data = data[data.fold != fold]
         oof_data = data[data.fold == fold]
