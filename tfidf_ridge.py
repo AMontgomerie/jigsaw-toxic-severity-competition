@@ -74,8 +74,10 @@ def train(
 
 def make_folds(data: pd.DataFrame, seed: int) -> pd.DataFrame:
     skf = StratifiedKFold(shuffle=True, random_state=seed)
+    bins = 5
+    stratified_targets = pd.cut(data.target, bins, labels=False)
     data["fold"] = -1
-    for fold, _, valid_index in enumerate(skf.split(data.text, data.target)):
+    for fold, _, valid_index in enumerate(skf.split(data.text, stratified_targets)):
         data.loc[valid_index] = fold
     return data
 
