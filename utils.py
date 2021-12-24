@@ -46,6 +46,7 @@ def parse_training_args() -> argparse.Namespace:
     parser.add_argument("--log_interval", type=int, default=100)
     parser.add_argument("--loss_margin", type=float, default=0)
     parser.add_argument("--max_length", type=int, default=128)
+    parser.add_argument("--num_labels", type=int, default=1)
     parser.add_argument("--save_dir", type=str, default=".")
     parser.add_argument("--scheduler", type=str, default="constant")
     parser.add_argument("--seed", type=int, default=666)

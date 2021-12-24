@@ -139,8 +139,11 @@ def predict(models: List[Pipeline], test_data: pd.DataFrame) -> np.ndarray:
     return np.mean(fold_predictions, axis=0)
 
 
-def save_model(model: Pipeline, fold: int, save_dir: str) -> None:
-    save_path = os.path.join(save_dir, f"tfidf_ridge_fold_{fold}.pkl")
+def save_model(model: Pipeline, save_dir: str, fold: int = None) -> None:
+    if fold:
+        save_path = os.path.join(save_dir, f"tfidf_ridge_fold_{fold}.pkl")
+    else:
+        save_path = os.path.join(save_dir, f"tfidf_ridge.pkl")
     joblib.dump(model, save_path)
 
 
@@ -178,7 +181,7 @@ if __name__ == "__main__":
             )
             mse_scores.append(mse)
             models.append(model)
-            save_model(model, fold, args.model_save_dir)
+            save_model(model, args.model_save_dir, fold)
         print(f"cv mse: {np.mean(mse_scores)}")
         valid_score = validate(models, valid_data)
         print(f"valid score (mean of {args.num_folds} folds): {valid_score}")
@@ -189,6 +192,7 @@ if __name__ == "__main__":
             alpha = 1
         model = train(data, valid_data, encoder, alpha, args.max_alpha)
         models.append(model)
+        save_model(model, args.model_save_dir)
     print("Generating test set predictions...")
     predictions = predict(models, test_data)
     submission = pd.DataFrame(

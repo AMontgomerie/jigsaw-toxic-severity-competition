@@ -29,7 +29,7 @@ if __name__ == "__main__":
         valid_data = pd.read_csv(config.valid_path)
         tokenizer = AutoTokenizer.from_pretrained(config.checkpoint)
         model = AutoModelForSequenceClassification.from_pretrained(
-            config.checkpoint, num_labels=1
+            config.checkpoint, num_labels=config.num_labels
         )
         train_set = ToxicDataset(
             train_data.text, tokenizer, config.max_length, train_data.target
