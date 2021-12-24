@@ -17,8 +17,12 @@ if __name__ == "__main__":
         ]
         config["extra_files"] = extra_files
     wandb.login()
+    if config.num_labels > 1:
+        project = "jigsaw-binary-train"
+    else:
+        project = "jigsaw-train"
     with wandb.init(
-        project="jigsaw-train",
+        project=project,
         group=str(args.group_id),
         name=f"{args.group_id}-{args.checkpoint}",
         config=config,
