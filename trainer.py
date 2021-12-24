@@ -100,7 +100,7 @@ class Trainer:
                 tepoch.set_description(f"epoch {epoch}")
                 for epoch_step, data in enumerate(self.train_loader):
                     if self.num_labels > 1:
-                        data["labels"] = data["labels"].unsqueeze()
+                        data["labels"] = data["labels"].unsqueeze(1)
                     loss = self._model_fn(data)
                     self.scaler.scale(loss).backward()
                     if global_step % self.accumulation_steps == 0:
