@@ -28,6 +28,7 @@ class Trainer:
         log_interval: int,
         model_name: str,
         model: nn.Module,
+        num_labels: int,
         more_toxic_valid_set: ToxicDataset,
         train_batch_size: int,
         train_set: ToxicDataset,
@@ -84,6 +85,7 @@ class Trainer:
         self.scaler = amp.GradScaler()
         self.wandb_train_loss = AverageMeter()
         self.validation_steps = validation_steps
+        self.num_labels = num_labels
 
     def train(self) -> float:
         wandb.watch(self.model, log="all", log_freq=self.log_interval)
@@ -97,6 +99,8 @@ class Trainer:
             with tqdm(total=len(self.train_loader), unit="batches") as tepoch:
                 tepoch.set_description(f"epoch {epoch}")
                 for epoch_step, data in enumerate(self.train_loader):
+                    if self.num_labels > 1:
+                        data["labels"] = data["labels"].unsqueeze()
                     loss = self._model_fn(data)
                     self.scaler.scale(loss).backward()
                     if global_step % self.accumulation_steps == 0:

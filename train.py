@@ -56,6 +56,7 @@ if __name__ == "__main__":
             model=model,
             model_name=config.checkpoint,
             more_toxic_valid_set=more_toxic_valid_set,
+            num_labels=config.num_labels,
             save_dir=config.save_dir,
             scheduler=config.scheduler,
             train_batch_size=config.train_batch_size,
