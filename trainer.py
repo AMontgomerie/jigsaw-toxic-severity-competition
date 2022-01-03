@@ -67,7 +67,7 @@ class Trainer:
         if self.loss_type == "mse":
             self.loss_fn = nn.MSELoss()
         elif self.loss_type == "bce":
-            self.loss_fn = nn.BCELoss()
+            self.loss_fn = nn.BCEWithLogitsLoss()
         self.optimizer = AdamW(
             self.model.parameters(), lr=learning_rate, weight_decay=weight_decay
         )
