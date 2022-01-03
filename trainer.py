@@ -221,7 +221,12 @@ class Trainer:
             for data in dataloader:
                 data = self._to_cuda(data)
                 output = self.model(**data)
-                predictions += list(output.logits.squeeze().cpu().numpy())
+                if self.num_labels == 1:
+                    predictions += list(output.logits.squeeze().cpu().numpy())
+                elif self.num_labels == 2:
+                    predictions += list(output.logits[:, 1].squeeze().cpu().numpy())
+                else:
+                    raise ValueError("which label should be used for probability?")
                 tepoch.update(1)
         return np.array(predictions)
 
@@ -232,7 +237,12 @@ class Trainer:
         for data in dataloader:
             data = self._to_cuda(data)
             output = self.model(**data)
-            predictions += list(output.logits.squeeze().cpu().numpy())
+            if self.num_labels == 1:
+                predictions += list(output.logits.squeeze().cpu().numpy())
+            elif self.num_labels == 2:
+                predictions += list(output.logits[:, 1].squeeze().cpu().numpy())
+            else:
+                raise ValueError("which label should be used for probability?")
         return np.array(predictions)
 
 
