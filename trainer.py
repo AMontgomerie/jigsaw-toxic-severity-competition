@@ -163,7 +163,7 @@ class Trainer:
 
     def _loss_fn(self, logits: torch.Tensor, labels: torch.Tensor) -> torch.Tensor:
         if self.loss_type == "mse":
-            loss = self.loss_fn(logits, labels)
+            loss = self.loss_fn(logits.squeeze(), labels)
         elif self.loss_type == "bce":
             predictions = torch.argmax(logits, dim=1)
             loss = self.loss_fn(predictions.float(), labels.squeeze().float())
