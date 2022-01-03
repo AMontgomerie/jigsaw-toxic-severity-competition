@@ -154,8 +154,9 @@ class Trainer:
     def _model_fn(self, data: Mapping[str, torch.Tensor]) -> torch.Tensor:
         data = self._to_cuda(data)
         with amp.autocast():
-            output = self.model(**data)
-            loss = output.loss
+            output = self.model(
+                input_ids=data["input_ids"], attention_mask=data["attention_mask"]
+            )
             loss = self._loss_fn(output.logits, data["labels"])
             loss = loss / self.accumulation_steps
         return loss
