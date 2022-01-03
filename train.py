@@ -53,6 +53,7 @@ if __name__ == "__main__":
             learning_rate=config.learning_rate,
             less_toxic_valid_set=less_toxic_valid_set,
             log_interval=config.log_interval,
+            loss_type=config.loss_type,
             model=model,
             model_name=config.checkpoint,
             more_toxic_valid_set=more_toxic_valid_set,
