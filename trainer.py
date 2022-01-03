@@ -66,8 +66,8 @@ class Trainer:
         self.loss_type = loss_type
         if self.loss_type == "mse":
             self.loss_fn = nn.MSELoss()
-        elif self.loss_type == "bce":
-            self.loss_fn = nn.BCEWithLogitsLoss()
+        elif self.loss_type == "ce":
+            self.loss_fn = nn.CrossEntropyLoss()
         self.optimizer = AdamW(
             self.model.parameters(), lr=learning_rate, weight_decay=weight_decay
         )
@@ -164,7 +164,7 @@ class Trainer:
     def _loss_fn(self, logits: torch.Tensor, labels: torch.Tensor) -> torch.Tensor:
         if self.loss_type == "mse":
             loss = self.loss_fn(logits.squeeze(), labels)
-        elif self.loss_type == "bce":
+        elif self.loss_type == "ce":
             predictions = torch.argmax(logits, dim=1).int()
             loss = self.loss_fn(predictions, labels.squeeze().int())
         else:
