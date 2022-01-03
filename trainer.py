@@ -165,7 +165,7 @@ class Trainer:
         if self.loss_type == "mse":
             loss = self.loss_fn(logits.squeeze(), labels)
         elif self.loss_type == "ce":
-            loss = self.loss_fn(logits, labels)
+            loss = self.loss_fn(logits, labels.squeeze())
         else:
             raise NotImplementedError()
         return loss
