@@ -165,8 +165,7 @@ class Trainer:
         if self.loss_type == "mse":
             loss = self.loss_fn(logits.squeeze(), labels)
         elif self.loss_type == "ce":
-            predictions = torch.argmax(logits, dim=1).int()
-            loss = self.loss_fn(predictions, labels.squeeze().int())
+            loss = self.loss_fn(logits, labels)
         else:
             raise NotImplementedError()
         return loss
