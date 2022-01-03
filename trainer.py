@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from torch.nn import MarginRankingLoss
 from torch.optim import AdamW
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import DataLoader
 from torch.cuda import amp
 from transformers import get_scheduler
 from tqdm import tqdm
@@ -26,6 +26,7 @@ class Trainer:
         learning_rate: float,
         less_toxic_valid_set: ToxicDataset,
         log_interval: int,
+        loss_type: str,
         model_name: str,
         model: nn.Module,
         num_labels: int,
@@ -62,6 +63,11 @@ class Trainer:
         )
         self.model = model
         self.model = self.model.to("cuda")
+        self.loss_type = loss_type
+        if self.loss_type == "mse":
+            self.loss_fn = nn.MSELoss()
+        elif self.loss_type == "bce":
+            self.loss_fn = nn.BCELoss()
         self.optimizer = AdamW(
             self.model.parameters(), lr=learning_rate, weight_decay=weight_decay
         )
@@ -150,7 +156,18 @@ class Trainer:
         with amp.autocast():
             output = self.model(**data)
             loss = output.loss
+            loss = self._loss_fn(output.logits, data["labels"])
             loss = loss / self.accumulation_steps
+        return loss
+
+    def _loss_fn(self, logits: torch.Tensor, labels: torch.Tensor) -> torch.Tensor:
+        if self.loss_type == "mse":
+            loss = self.loss_fn(logits, labels)
+        elif self.loss_type == "bce":
+            predictions = torch.argmax(logits, dim=1)
+            loss = self.loss_fn(predictions, labels)
+        else:
+            raise NotImplementedError()
         return loss
 
     def _on_eval(self, score_improved: bool, valid_score: float) -> None:
@@ -252,6 +269,7 @@ class PairedTrainer(Trainer):
             learning_rate,
             less_toxic_valid_set,
             log_interval,
+            "ranking_loss",
             model_name,
             model,
             more_toxic_valid_set,
