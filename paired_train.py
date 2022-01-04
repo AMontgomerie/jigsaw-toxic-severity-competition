@@ -1,4 +1,4 @@
-import argparse
+import torch
 import pandas as pd
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import os
@@ -50,6 +50,11 @@ if __name__ == "__main__":
         model = AutoModelForSequenceClassification.from_pretrained(
             config.checkpoint, num_labels=1
         )
+        if config.weights_path is not None:
+            state_dict = torch.load(
+                config.weights_path, map_location=torch.device("cuda")
+            )
+            model.load_state_dict(state_dict)
         trainer = PairedTrainer(
             accumulation_steps=config.accumulation_steps,
             dataloader_workers=config.dataloader_workers,

@@ -1,4 +1,5 @@
 import pandas as pd
+import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import os
 import wandb
@@ -35,6 +36,11 @@ if __name__ == "__main__":
         model = AutoModelForSequenceClassification.from_pretrained(
             config.checkpoint, num_labels=config.num_labels
         )
+        if config.weights_path is not None:
+            state_dict = torch.load(
+                config.weights_path, map_location=torch.device("cuda")
+            )
+            model.load_state_dict(state_dict)
         train_set = ToxicDataset(
             train_data.text, tokenizer, config.max_length, train_data.target
         )

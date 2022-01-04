@@ -59,4 +59,5 @@ def parse_training_args() -> argparse.Namespace:
     parser.add_argument("--valid_path", type=str, default=None)
     parser.add_argument("--warmup", type=float, default=0)
     parser.add_argument("--weight_decay", type=float, default=1e-2)
+    parser.add_argument("--weights_path", type=str, default=None)
     return parser.parse_args()
