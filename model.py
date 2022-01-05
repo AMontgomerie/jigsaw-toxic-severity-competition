@@ -21,5 +21,5 @@ def convert_regressor_to_binary(state_dict: Mapping) -> Mapping:
     state_dict["classifier.weight"] = torch.vstack(
         [state_dict["classifier.weight"]] * 2
     )
-    state_dict["classifier.bias"] = torch.vstack([state_dict["classifier.bias"]] * 2)
+    state_dict["classifier.bias"] = torch.cat([state_dict["classifier.bias"]] * 2)
     return state_dict
