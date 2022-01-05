@@ -7,6 +7,7 @@ import wandb
 from utils import set_seed, parse_training_args
 from dataset import ToxicDataset
 from trainer import Trainer
+from model import convert_regressor_to_binary
 
 if __name__ == "__main__":
     args = parse_training_args()
@@ -40,6 +41,8 @@ if __name__ == "__main__":
             state_dict = torch.load(
                 config.weights_path, map_location=torch.device("cuda")
             )
+            if config.num_labels == 2:
+                state_dict = convert_regressor_to_binary(state_dict)
             model.load_state_dict(state_dict)
         train_set = ToxicDataset(
             train_data.text, tokenizer, config.max_length, train_data.target
