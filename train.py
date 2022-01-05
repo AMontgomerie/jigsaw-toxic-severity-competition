@@ -34,7 +34,7 @@ if __name__ == "__main__":
         train_data = pd.read_csv(config.train_path)
         if config.use_extra_data:
             extra_data = [pd.read_csv(f) for f in extra_files]
-            train_data = pd.concat([train_data] + extra_data)
+            train_data = pd.concat([train_data] + extra_data).reset_index(drop=True)
         valid_data = pd.read_csv(config.valid_path)
         tokenizer = AutoTokenizer.from_pretrained(config.checkpoint)
         model = AutoModelForSequenceClassification.from_pretrained(
