@@ -41,12 +41,17 @@ if __name__ == "__main__":
             config.checkpoint, num_labels=config.num_labels
         )
         if config.weights_path is not None:
+            print(f"Loading {config.weights_path}")
             state_dict = torch.load(
                 config.weights_path, map_location=torch.device("cuda")
             )
             if config.num_labels == 2 and state_dict["classifier.bias"].size()[0] == 1:
+                print("Converting pretrained regressor head into binary classifier.")
                 state_dict = convert_regressor_to_binary(state_dict)
-            elif config.num_labels == 1 and state_dict["classifier.bias"].size()[0] == 2:
+            elif (
+                config.num_labels == 1 and state_dict["classifier.bias"].size()[0] == 2
+            ):
+                print("Converting pretrained binary classifier into regressor.")
                 state_dict = convert_binary_to_regressor(state_dict)
             model.load_state_dict(state_dict)
         train_set = ToxicDataset(

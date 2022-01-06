@@ -18,7 +18,7 @@ class ToxicLSTM(nn.Module):
 
 
 def convert_regressor_to_binary(state_dict: Mapping) -> Mapping:
-    """Final layer size 1 -> 2"""
+    """Final layer size 1 -> 2, copy weights"""
     state_dict["classifier.weight"] = torch.vstack(
         [state_dict["classifier.weight"]] * 2
     )
@@ -27,7 +27,7 @@ def convert_regressor_to_binary(state_dict: Mapping) -> Mapping:
 
 
 def convert_binary_to_regressor(state_dict: Mapping) -> Mapping:
-    """Final layer size 2 -> 1"""
+    """Final layer size 2 -> 1, keep the weights for positive class"""
     state_dict["classifier.weight"] = state_dict["classifier.weight"][:, 1]
     state_dict["classifier.bias"] = state_dict["classifier.bias"][1]
     return state_dict
