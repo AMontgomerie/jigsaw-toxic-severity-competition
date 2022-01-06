@@ -27,7 +27,6 @@ def convert_regressor_to_binary(state_dict: Mapping) -> Mapping:
 
 
 def convert_binary_to_regressor(state_dict: Mapping) -> Mapping:
-    """Final layer size 2 -> 1, keep the weights for positive class"""
-    state_dict["classifier.weight"] = state_dict["classifier.weight"][:, 1]
-    state_dict["classifier.bias"] = state_dict["classifier.bias"][1]
+    del state_dict["classifier.weight"]
+    del state_dict["classifier.bias"]
     return state_dict
