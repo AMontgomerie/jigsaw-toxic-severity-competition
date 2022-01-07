@@ -45,11 +45,19 @@ if __name__ == "__main__":
             state_dict = torch.load(
                 config.weights_path, map_location=torch.device("cuda")
             )
-            if state_dict["classifier.bias"]:
-                if config.num_labels == 2 and state_dict["classifier.bias"].shape[0] == 1:
-                    print("Converting pretrained regressor head into binary classifier.")
+            if "classifier.bias" in state_dict:
+                if (
+                    config.num_labels == 2
+                    and state_dict["classifier.bias"].shape[0] == 1
+                ):
+                    print(
+                        "Converting pretrained regressor head into binary classifier."
+                    )
                     state_dict = convert_regressor_to_binary(state_dict)
-                elif config.num_labels == 1 and state_dict["classifier.bias"].shape[0] == 2:
+                elif (
+                    config.num_labels == 1
+                    and state_dict["classifier.bias"].shape[0] == 2
+                ):
                     print("Converting pretrained binary classifier into regressor.")
                     state_dict = convert_binary_to_regressor(state_dict)
             model.load_state_dict(state_dict)
