@@ -282,6 +282,7 @@ class PairedTrainer(Trainer):
             "ranking_loss",
             model_name,
             model,
+            1,
             more_toxic_valid_set,
             train_batch_size,
             train_set,
