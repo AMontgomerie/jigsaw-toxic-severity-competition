@@ -325,7 +325,5 @@ class PairedTrainer(Trainer):
             loss = self.loss_fn(
                 less_toxic_output.logits, more_toxic_output.logits, target
             )
-            print("pre accumulation loss", loss)
             loss = loss / self.accumulation_steps
-            print("post accumulation loss", loss)
         return loss

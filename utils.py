@@ -44,7 +44,7 @@ def parse_training_args() -> argparse.Namespace:
     parser.add_argument("--group_id", type=int, required=True)
     parser.add_argument("--learning_rate", type=float, default=1e-5)
     parser.add_argument("--log_interval", type=int, default=100)
-    parser.add_argument("--loss_margin", type=float, default=0)
+    parser.add_argument("--loss_margin", type=float, default=0.5)
     parser.add_argument("--loss_type", type=str, default="mse")
     parser.add_argument("--max_length", type=int, default=128)
     parser.add_argument("--num_labels", type=int, default=1)
