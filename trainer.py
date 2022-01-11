@@ -89,7 +89,6 @@ class Trainer:
         self.log_interval = log_interval
         self.best_valid_score = 0
         self.scaler = amp.GradScaler()
-        self.wandb_train_loss = AverageMeter()
         self.validation_steps = validation_steps
         self.num_labels = num_labels
 
@@ -115,13 +114,12 @@ class Trainer:
                         self.scheduler.step()
                         self.optimizer.zero_grad(set_to_none=True)
                     self.train_loss.update(loss.item(), self.train_batch_size)
-                    self.wandb_train_loss.update(loss.item(), self.train_batch_size)
                     if global_step % self.log_interval == 0:
                         wandb.log(
-                            {"epoch": epoch, "train_loss": self.wandb_train_loss.avg},
+                            {"epoch": epoch, "train_loss": self.train_loss.avg},
                             step=global_step,
                         )
-                        self.wandb_train_loss.reset()
+                        self.train_loss.reset()
                     tepoch.set_postfix({"train_loss": self.train_loss.avg})
                     tepoch.update(1)
 
