@@ -40,24 +40,6 @@ class Trainer:
         warmup: float,
         weight_decay: float,
     ) -> None:
-        print("Trainer recieved args:")
-        print("accumulation_steps", accumulation_steps)
-        print("dataloader_workers", dataloader_workers)
-        print("early_stopping_patience", early_stopping_patience)
-        print("epochs", epochs)
-        print("fold", fold)
-        print("learning_rate", learning_rate)
-        print("log_interval", log_interval)
-        print("loss_type", loss_type)
-        print("model_name", model_name)
-        print("num_labels", num_labels)
-        print("train_batch_size", train_batch_size)
-        print("save_dir", save_dir)
-        print("scheduler", scheduler)
-        print("valid_batch_size", valid_batch_size)
-        print("validation_steps", validation_steps)
-        print("warmup", warmup)
-        print("weight_decay", weight_decay)
         self.train_loader = DataLoader(
             train_set,
             batch_size=train_batch_size,
@@ -308,8 +290,6 @@ class PairedTrainer(Trainer):
             warmup,
             weight_decay,
         )
-        print("paired trainer args:")
-        print("loss_margin", loss_margin)
         self.loss_fn = MarginRankingLoss(loss_margin)
 
     def _model_fn(
