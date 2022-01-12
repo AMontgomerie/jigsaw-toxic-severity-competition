@@ -54,6 +54,7 @@ if __name__ == "__main__":
             state_dict = torch.load(
                 config.weights_path, map_location=torch.device("cuda")
             )
+            print(f"Loading weights from {config.weights_path}")
             model.load_state_dict(state_dict)
         trainer = PairedTrainer(
             accumulation_steps=config.accumulation_steps,
