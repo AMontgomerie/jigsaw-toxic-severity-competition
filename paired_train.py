@@ -15,6 +15,7 @@ if __name__ == "__main__":
         extra_files = [
             os.path.join(config["extra_data_dir"], f)
             for f in os.listdir(config["extra_data_dir"])
+            if f.endswith(".csv")
         ]
         config["extra_files"] = extra_files
     wandb.login()
@@ -35,6 +36,7 @@ if __name__ == "__main__":
             train_data = pd.read_csv(config.train_path)
             valid_data = pd.read_csv(config.valid_path)
         if config.use_extra_data:
+            print("adding extra data:")
             for file in extra_files:
                 print(file)
             extra_data = pd.concat([pd.read_csv(f) for f in extra_files])
