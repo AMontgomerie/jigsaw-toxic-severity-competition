@@ -35,6 +35,8 @@ if __name__ == "__main__":
             train_data = pd.read_csv(config.train_path)
             valid_data = pd.read_csv(config.valid_path)
         if config.use_extra_data:
+            for file in extra_files:
+                print(file)
             extra_data = pd.concat([pd.read_csv(f) for f in extra_files])
             train_data = pd.concat([train_data, extra_data]).reset_index(drop=True)
         tokenizer = AutoTokenizer.from_pretrained(config.checkpoint)
