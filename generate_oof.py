@@ -28,7 +28,7 @@ if __name__ == "__main__":
         less_toxic_dataset = ToxicDataset(
             fold_data.less_toxic, tokenizer, args.max_length
         )
-        data.loc[data.fold == fold]["less_toxic_score"] = predict(
+        data.loc[data.fold == fold, "less_toxic_score"] = predict(
             model,
             less_toxic_dataset,
             f"{args.base_model_name} fold {fold} less toxic",
@@ -38,7 +38,7 @@ if __name__ == "__main__":
         more_toxic_dataset = ToxicDataset(
             fold_data.less_toxic, tokenizer, args.max_length
         )
-        data.loc[data.fold == fold]["more_toxic_score"] = predict(
+        data.loc[data.fold == fold, "more_toxic_score"] = predict(
             model,
             more_toxic_dataset,
             f"{args.base_model_name} fold {fold} more toxic",
