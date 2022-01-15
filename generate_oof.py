@@ -25,7 +25,9 @@ if __name__ == "__main__":
         state_dict = torch.load(weights_path, map_location=torch.device("cuda"))
         model.load_state_dict(state_dict)
         fold_data = data.loc[data.fold == fold]
-        less_toxic_dataset = ToxicDataset(data.less_toxic, tokenizer, args.max_length)
+        less_toxic_dataset = ToxicDataset(
+            fold_data.less_toxic, tokenizer, args.max_length
+        )
         data.loc[data.fold == fold]["less_toxic_score"] = predict(
             model,
             less_toxic_dataset,
@@ -33,7 +35,9 @@ if __name__ == "__main__":
             args.batch_size,
             args.dataloader_workers,
         )
-        more_toxic_dataset = ToxicDataset(data.less_toxic, tokenizer, args.max_length)
+        more_toxic_dataset = ToxicDataset(
+            fold_data.less_toxic, tokenizer, args.max_length
+        )
         data.loc[data.fold == fold]["more_toxic_score"] = predict(
             model,
             more_toxic_dataset,
