@@ -30,6 +30,7 @@ if __name__ == "__main__":
         set_seed(config.seed)
         data = pd.read_csv(config.train_path)
         if args.fold is not None:
+            print(f"Using fold {fold} as validation.")
             train_data = data.loc[data.fold != fold].reset_index(drop=True)
             valid_data = data.loc[data.fold == fold].reset_index(drop=True)
         else:
