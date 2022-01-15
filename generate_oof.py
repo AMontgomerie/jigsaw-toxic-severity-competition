@@ -24,7 +24,7 @@ if __name__ == "__main__":
         print(f"Loading {weights_path}.")
         state_dict = torch.load(weights_path, map_location=torch.device("cuda"))
         model.load_state_dict(state_dict)
-        fold_data = data.loc[data.fold == fold]
+        fold_data = data.loc[data.fold == fold].reset_index(drop=True)
         less_toxic_dataset = ToxicDataset(
             fold_data.less_toxic, tokenizer, args.max_length
         )
