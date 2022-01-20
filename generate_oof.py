@@ -36,7 +36,7 @@ if __name__ == "__main__":
             args.dataloader_workers,
         )
         more_toxic_dataset = ToxicDataset(
-            fold_data.less_toxic, tokenizer, args.max_length
+            fold_data.more_toxic, tokenizer, args.max_length
         )
         data.loc[data.fold == fold, "more_toxic_score"] = predict(
             model,

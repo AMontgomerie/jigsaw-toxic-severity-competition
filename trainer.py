@@ -186,7 +186,8 @@ class Trainer:
                     print("Terminating.")
                     return True
             else:
-                print(f"{valid_score} is not an improvement.")
+                print(f"{valid_score} is not an improvement. Saving.")
+                torch.save(self.model.state_dict(), self.save_path)
         return False
 
     def _to_cuda(self, data: Mapping[str, torch.Tensor]) -> Mapping[str, torch.Tensor]:
