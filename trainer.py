@@ -33,6 +33,7 @@ class Trainer:
         more_toxic_valid_set: ToxicDataset,
         train_batch_size: int,
         train_set: ToxicDataset,
+        save_all: bool,
         save_dir: str,
         scheduler: str,
         valid_batch_size: int,
@@ -62,6 +63,8 @@ class Trainer:
             num_workers=dataloader_workers,
         )
         self.model = model
+        self.model_name = model_name
+        self.fold = fold
         self.model = self.model.to("cuda")
         self.loss_type = loss_type
         if self.loss_type == "mse":
@@ -71,6 +74,7 @@ class Trainer:
         self.optimizer = AdamW(
             self.model.parameters(), lr=learning_rate, weight_decay=weight_decay
         )
+        self.epoch = 1
         self.epochs = epochs
         self.accumulation_steps = accumulation_steps
         total_steps = (len(self.train_loader) // self.accumulation_steps) * self.epochs
@@ -81,9 +85,8 @@ class Trainer:
         self.train_loss = AverageMeter()
         self.train_batch_size = train_batch_size
         self.valid_batch_size = valid_batch_size
-        self.save_path = os.path.join(
-            save_dir, f"{model_name.replace('/', '_')}_{fold}.bin"
-        )
+        self.save_all = save_all
+        self.save_dir = save_dir
         self.early_stopping_patience = early_stopping_patience
         self.early_stopping_counter = 0
         self.log_interval = log_interval
@@ -98,6 +101,7 @@ class Trainer:
         global_step = 1
         self.optimizer.zero_grad(set_to_none=True)
         for epoch in range(1, self.epochs + 1):
+            self.epoch = epoch
             self.model.train()
             self.train_loss.reset()
             with tqdm(total=len(self.train_loader), unit="batches") as tepoch:
@@ -172,7 +176,7 @@ class Trainer:
             print(
                 f"Valid score improved from {self.best_valid_score} to {valid_score}. Saving."
             )
-            torch.save(self.model.state_dict(), self.save_path)
+            self._save()
             self.best_valid_score = valid_score
             self.early_stopping_counter = 0
         else:
@@ -187,11 +191,20 @@ class Trainer:
                     return True
             else:
                 print(f"{valid_score} is not an improvement. Saving.")
-                torch.save(self.model.state_dict(), self.save_path)
+                self._save()
         return False
 
     def _to_cuda(self, data: Mapping[str, torch.Tensor]) -> Mapping[str, torch.Tensor]:
         return {k: v.to("cuda") for k, v in data.items()}
+
+    def _save(self) -> None:
+        model_name = self.model_name.replace("/", "_")
+        if self.save_all:
+            file_name = f"{model_name}_{self.fold}_epoch-{self.epoch}.bin"
+        else:
+            file_name = f"{model_name}_{self.fold}.bin"
+        save_path = os.path.join(self.save_dir, file_name)
+        torch.save(self.model.state_dict(), save_path)
 
     def evaluate(self, use_tqdm: bool = True) -> float:
         if use_tqdm:
@@ -267,6 +280,7 @@ class PairedTrainer(Trainer):
         validation_steps: int,
         warmup: float,
         weight_decay: float,
+        save_all: bool,
     ) -> None:
         super().__init__(
             accumulation_steps,
@@ -284,6 +298,7 @@ class PairedTrainer(Trainer):
             more_toxic_valid_set,
             train_batch_size,
             train_set,
+            save_all,
             save_dir,
             scheduler,
             valid_batch_size,

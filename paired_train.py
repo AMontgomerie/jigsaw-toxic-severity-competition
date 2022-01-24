@@ -74,6 +74,7 @@ if __name__ == "__main__":
             model=model,
             model_name=config.checkpoint,
             more_toxic_valid_set=more_toxic_valid_set,
+            save_all=config.save_all,
             save_dir=config.save_dir,
             scheduler=config.scheduler,
             train_batch_size=config.train_batch_size,
