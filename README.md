@@ -26,6 +26,8 @@ python train.py \
 
 `group_id` is only used to associate this run with a group in weights&biases. This will use the whole of `ruddit.csv` as training data, and the whole of `validation_folds.csv` as validation data (ignoring the folds).
 
+`--early_stopping_patience` is set here so that the training can terminate early if necessary. Only the epoch which gets the best score on the validation set will be saved.
+
 Now here's an example of a second stage of fine-tuning using the model we just trained on ruddit. This time we're using the paired validation data and training with MarginRankingLoss instead of MSELoss:
 
 ```
@@ -50,6 +52,8 @@ python paired_train.py \
 Note that in this case `validation_folds.csv` needs to have an extra column called `fold` which will be use in combination with the `--fold` argument to split the data for training and validation. This script will need to be run k times with each value of `--fold` to produce the full cross-validated set of models.
 
 `--weights_path` is optional. If provided then the given weights file we be used to initialise the model, otherwise the training will start from the pretrained checkpoint defined by `--checkpoint`.
+
+Instead of using `--early_stopping_patience`, we use `--save_all` here. This saves a checkpoint for each epoch (without overwriting the previous one). This allows us to calculate a CV score for each epoch and take the checkpoints from the epoch which did the best (we can then discard the weights from all other epochs).
 
 See `utils.parse_training_args` for the full list of command line options.
 
