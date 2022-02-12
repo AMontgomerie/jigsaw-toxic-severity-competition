@@ -50,3 +50,17 @@ python paired_train.py \
 Note that in this case `validation_folds.csv` needs to have an extra column called `fold` which will be use in combination with the `--fold` argument to split the data for training and validation. This script will need to be run k times with each value of `--fold` to produce the full cross-validated set of models.
 
 `--weights_path` is optional. If provided then the given weights file we be used to initialise the model, otherwise the training will start from the pretrained checkpoint defined by `--checkpoint`.
+
+See `utils.parse_training_args` for the full list of command line options.
+
+## Ensembling
+
+A notebook containing the code for tuning ensemble weights and also the final inference notebook have also been included. These notebooks have simply been copied from Kaggle so paths to data files and model weights will of course need to be modified to make them usable.
+
+### tune-ensemble-weights
+
+In this notebook, each (k-fold) model is represented by an OOF file containing its predictions on the validation data. The predictions are blended by calculating a weighted mean. The weights for each model are determined by Optuna. The model selection process takes place over a series of rounds. In each round each available model is temporarily added to the ensemble and all the weights are retuned. Whichever additional model produced the highest increase in OOF score will be added to the ensemble. This process is repeated until the score stops improving.
+
+### ensemble-inference
+
+In this notebook, the inference script is run for each model in turn. The inference sscript outputs the predictions to a CSV file. The CSV files are then all read back into the notebook, and the model weights produced in `tune-ensemble-weights` are used to calculate a weighted mean for each prediction.
